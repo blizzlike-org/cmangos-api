@@ -11,6 +11,54 @@ import (
   "github.com/google/uuid"
 )
 
+var needInvite bool
+
+func DoCreateAccount(w http.ResponseWriter, r *http.Request) {
+  var auth []string
+  if needInvite {
+    auth_header := r.Header.Get("Authorization")
+    auth = strings.Split(auth_header, " ")
+
+    if !strings.EqualFold(auth[0], "token") {
+      fmt.Fprintf(os.Stderr, "Authentication method not supported\n")
+      w.WriteHeader(http.StatusBadRequest)
+      return
+    }
+
+    if !InviteTokenAuth(auth[1]) {
+      fmt.Fprintf(os.Stderr, "Cannot authenticate invite %s\n", auth[1])
+      w.WriteHeader(http.StatusUnauthorized)
+      return
+    }
+  }
+
+  var account JsonAccountReq
+  var resp = JsonAccountResp{true, true, true, true}
+  _ = json.NewDecoder(r.Body).Decode(&account)
+  id, err := CreateAccount(account, &resp)
+  if err != nil {
+    fmt.Fprintf(os.Stderr, "Cannot create account (%v)\n", err)
+    if !resp.Username || !resp.Password || !resp.Repeat || !resp.Email {
+      w.Header().Add("Content-Type", "application/json")
+      w.WriteHeader(http.StatusBadRequest)
+      json.NewEncoder(w).Encode(resp)
+      return
+    }
+
+    w.WriteHeader(http.StatusInternalServerError)
+    return
+  }
+
+  if needInvite {
+    AddAccountToInviteToken(auth[1], id)
+  }
+
+  w.Header().Add("Content-Type", "application/json")
+  w.WriteHeader(http.StatusCreated)
+  json.NewEncoder(w).Encode(resp)
+  return
+}
+
 func DoAuth(w http.ResponseWriter, r *http.Request) {
   auth_header := r.Header.Get("Authorization")
   auth := strings.Split(auth_header, " ")
@@ -79,4 +127,5 @@ func DoInvite(w http.ResponseWriter, r *http.Request) {
   w.Header().Add("Content-Type", "application/json")
   w.WriteHeader(http.StatusCreated)
   json.NewEncoder(w).Encode(inv)
+  return
 }

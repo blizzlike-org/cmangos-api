@@ -55,10 +55,12 @@ func main() {
     os.Exit(3)
   }
   defer realmdDB.Close()
+  needInvite := cfg.Section("account").Key("needInvite").MustBool(false)
 
-  account.Init(apiDB, realmdDB)
+  account.Init(apiDB, realmdDB, needInvite)
 
   router := mux.NewRouter()
+  router.HandleFunc("/account", account.DoCreateAccount).Methods("POST")
   router.HandleFunc("/account/auth", account.DoAuth).Methods("POST")
   router.HandleFunc("/account/invite", account.DoInvite).Methods("POST")
 

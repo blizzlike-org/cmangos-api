@@ -24,6 +24,23 @@ func BasicAuth(username, password string) (int, error) {
   return id, nil
 }
 
+func InviteTokenAuth(token string) bool {
+  var friend int
+  stmt, err := apiDB.Prepare(
+    "SELECT friend FROM invitetoken WHERE token = ? AND account IS NULL;")
+  if err != nil {
+    return false
+  }
+  defer stmt.Close()
+
+  err = stmt.QueryRow(token).Scan(&friend)
+  if err != nil {
+    return false
+  }
+
+  return true
+}
+
 func TokenAuth(token string) (int, error) {
   var owner, expiry int
   stmt, err := apiDB.Prepare(
