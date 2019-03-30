@@ -60,7 +60,7 @@ func main() {
 
   router := mux.NewRouter()
   router.HandleFunc("/account/auth", account.DoAuth).Methods("POST")
-  //router.HandleFunc("/account/{username}/invite", account.CreateInvite).Methods("POST")
+  router.HandleFunc("/account/invite", account.DoInvite).Methods("POST")
 
   log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", host, port), router))
 }

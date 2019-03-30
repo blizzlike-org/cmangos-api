@@ -2,9 +2,10 @@ package account
 
 import (
   "time"
+  "database/sql"
 )
 
-func Auth(username, password string) (int, error) {
+func BasicAuth(username, password string) (int, error) {
   var id int
   stmt, err := realmdDB.Prepare(
     `SELECT id FROM account
@@ -21,6 +22,51 @@ func Auth(username, password string) (int, error) {
   }
 
   return id, nil
+}
+
+func TokenAuth(token string) (int, error) {
+  var owner, expiry int
+  stmt, err := apiDB.Prepare(
+    "SELECT owner, expiry FROM authtoken WHERE token = ?;")
+  if err != nil {
+    return 0, err
+  }
+  defer stmt.Close()
+
+  err = stmt.QueryRow(token).Scan(&owner, &expiry)
+  if err != nil {
+    return 0, err
+  }
+
+  var stmtUpdate *sql.Stmt
+  now := time.Now().Unix()
+  if int(now) <= expiry {
+    stmtUpdate, err = apiDB.Prepare(
+      "UPDATE authtoken SET expiry = ? WHERE token = ?;")
+    if err != nil {
+      return 0, err
+    }
+    defer stmtUpdate.Close()
+    _, err = stmtUpdate.Exec(now + 3600, token)
+    if err != nil {
+      return 0, err
+    }
+  } else {
+    stmtUpdate, err = apiDB.Prepare(
+      "DELETE FROM authtoken WHERE token = ?;")
+    if err != nil {
+      return 0, err
+    }
+    defer stmtUpdate.Close()
+    if err != nil {
+      _, err = stmtUpdate.Exec(token)
+      if err != nil {
+        return 0, err
+      }
+    }
+  }
+
+  return owner, nil
 }
 
 func WriteAuthToken(token string, id int) error {
