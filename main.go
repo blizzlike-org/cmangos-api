@@ -33,11 +33,11 @@ func main() {
 
   var apiDB, realmdDB *sql.DB
   apiDB, err = sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
-    cfg.Section("apidb").Key("username").MustString("wow-api"),
-    cfg.Section("apidb").Key("password").MustString("wow-api"),
+    cfg.Section("apidb").Key("username").MustString("cmangos-api"),
+    cfg.Section("apidb").Key("password").MustString("cmangos-api"),
     cfg.Section("apidb").Key("hostname").MustString("localhost"),
     cfg.Section("apidb").Key("port").MustInt(3306),
-    cfg.Section("apidb").Key("database").MustString("wow-api")))
+    cfg.Section("apidb").Key("database").MustString("cmangos-api")))
   if err != nil {
     fmt.Fprintf(os.Stderr, "Cannot connect to api database (%v)\n")
     os.Exit(3)

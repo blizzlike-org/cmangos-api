@@ -6,11 +6,11 @@ port = 5556
 needInvite = false
 
 [apidb]
-username = wow-api
-password = wow-api
+username = cmangos-api
+password = cmangos-api
 hostname = localhost
 port = 3306
-database = wow-api
+database = cmangos-api
 
 [realmddb]
 username = cmangos
