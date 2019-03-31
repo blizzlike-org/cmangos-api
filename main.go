@@ -11,6 +11,7 @@ import (
   "metagit.org/blizzlike/cmangos-api/modules/database"
   e_account "metagit.org/blizzlike/cmangos-api/modules/endpoints/account"
   e_config "metagit.org/blizzlike/cmangos-api/modules/endpoints/config"
+  e_realm "metagit.org/blizzlike/cmangos-api/modules/endpoints/realm"
 )
 
 func main() {
@@ -37,6 +38,8 @@ func main() {
   router.HandleFunc("/account/invite", e_account.DoInvite).Methods("POST")
 
   router.HandleFunc("/config", e_config.DoConfig).Methods("GET")
+
+  router.HandleFunc("/realm", e_realm.DoRealmlist).Methods("GET")
 
   log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", cfg.Listen, cfg.Port), router))
 }

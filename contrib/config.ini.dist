@@ -21,3 +21,4 @@ database = cmangosrealmd
 
 [cmangos]
 realmd = logon.example.org
+port = 3724

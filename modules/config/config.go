@@ -14,6 +14,7 @@ type ConfigDB struct {
 
 type ConfigCmangos struct {
   Realmd string
+  Port int
 }
 
 type Config struct {
@@ -51,6 +52,7 @@ func Read(file string) (Config, error) {
   Cfg.NeedInvite = c.Section("account").Key("needInvite").MustBool(false)
 
   Cfg.Cmangos.Realmd = c.Section("cmangos").Key("realmd").MustString("logon.example.org")
+  Cfg.Cmangos.Port = c.Section("cmangos").Key("port").MustInt(3724)
 
   return Cfg, nil
 }
