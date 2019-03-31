@@ -4,18 +4,14 @@ import (
   "encoding/json"
   "net/http"
 
+  iface_config "metagit.org/blizzlike/cmangos-api/cmangos/interface/config"
   "metagit.org/blizzlike/cmangos-api/modules/config"
 )
 
-type JsonConfigResp struct {
-  NeedInvite bool `json:"needInvite,omitempty"`
-  Realmd string `json:"realmd,omitempty"`
-}
-
 func DoConfig(w http.ResponseWriter, r *http.Request) {
-  var resp JsonConfigResp
+  var resp iface_config.InterfaceConfig
   resp.NeedInvite = config.Cfg.NeedInvite
-  resp.Realmd = config.Cfg.Cmangos.Realmd
+  resp.RealmdAddress = config.Cfg.Cmangos.Realmd
 
   w.Header().Add("Content-Type", "application/json")
   w.WriteHeader(http.StatusOK)
