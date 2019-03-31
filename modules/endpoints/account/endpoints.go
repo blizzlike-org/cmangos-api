@@ -11,11 +11,11 @@ import (
   "github.com/google/uuid"
 )
 
-var needInvite bool
+var NeedInvite bool
 
 func DoCreateAccount(w http.ResponseWriter, r *http.Request) {
   var auth []string
-  if needInvite {
+  if NeedInvite {
     auth_header := r.Header.Get("Authorization")
     auth = strings.Split(auth_header, " ")
 
@@ -49,7 +49,7 @@ func DoCreateAccount(w http.ResponseWriter, r *http.Request) {
     return
   }
 
-  if needInvite {
+  if NeedInvite {
     AddAccountToInviteToken(auth[1], id)
   }
 

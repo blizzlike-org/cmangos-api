@@ -20,12 +20,12 @@ type JsonAccountResp struct {
   Email bool `json:"email"`
 }
 
-var apiDB *sql.DB
-var realmdDB *sql.DB
+var ApiDB *sql.DB
+var RealmdDB *sql.DB
 
 func AccountExists(username string) bool {
   var id int
-  stmt, err := realmdDB.Prepare(
+  stmt, err := RealmdDB.Prepare(
     "SELECT id FROM account WHERE username = ?;")
   if err != nil {
     return false
@@ -62,7 +62,7 @@ func CreateAccount(account JsonAccountReq, resp *JsonAccountResp) (int, error) {
     return 0, fmt.Errorf("Cannot create account")
   }
 
-  stmt, err := realmdDB.Prepare(
+  stmt, err := RealmdDB.Prepare(
     `INSERT INTO account
      (username, sha_pass_hash, email, joindate)
      VALUES (UPPER(?), SHA1(CONCAT(UPPER(?), ':', UPPER(?))), LOWER(?), NOW());`)
@@ -84,7 +84,7 @@ func CreateAccount(account JsonAccountReq, resp *JsonAccountResp) (int, error) {
 
 func EmailExists(email string) bool {
   var id int
-  stmt, err := realmdDB.Prepare(
+  stmt, err := RealmdDB.Prepare(
     "SELECT id FROM account WHERE email = ?;")
   if err != nil {
     return false
@@ -97,10 +97,4 @@ func EmailExists(email string) bool {
   }
 
   return true
-}
-
-func Init(adb, rdb *sql.DB, nI bool) {
-  apiDB = adb
-  realmdDB = rdb
-  needInvite = nI
 }

@@ -5,7 +5,7 @@ type JsonInviteResp struct {
 }
 
 func AddAccountToInviteToken(token string, id int) error {
-  stmt, err := apiDB.Prepare(
+  stmt, err := ApiDB.Prepare(
     "UPDATE invitetoken SET account = ? WHERE token = ?;")
   if err != nil {
     return err
@@ -21,7 +21,7 @@ func AddAccountToInviteToken(token string, id int) error {
 }
 
 func WriteInviteToken(token string, id int) error {
-  stmt, err := apiDB.Prepare(
+  stmt, err := ApiDB.Prepare(
     "INSERT INTO invitetoken (token, friend) VALUES (?, ?);")
   if err != nil {
     return err
