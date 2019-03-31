@@ -14,12 +14,17 @@ type ConfigDB struct {
   Database string
 }
 
+type ConfigCmangos struct {
+  Realmd string
+}
+
 type Config struct {
   Listen string
   Port int
   ApiDB ConfigDB
   RealmdDB ConfigDB
   NeedInvite bool
+  Cmangos ConfigCmangos
 }
 
 func Read(file string) (Config, error) {
@@ -45,6 +50,8 @@ func Read(file string) (Config, error) {
   cfg.RealmdDB.Database = c.Section("realmddb").Key("database").MustString("realmd")
 
   cfg.NeedInvite = c.Section("account").Key("needInvite").MustBool(false)
+
+  cfg.Cmangos.Realmd = c.Section("cmangos").Key("realmd").MustString("logon.example.org")
 
   return cfg, nil
 }

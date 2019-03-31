@@ -53,6 +53,7 @@ func main() {
   e_account.RealmdDB = realmdDB
   e_account.NeedInvite = cfg.NeedInvite
   e_config.NeedInvite = cfg.NeedInvite
+  e_config.Realmd = cfg.Cmangos.Realmd
 
   router := mux.NewRouter()
   router.HandleFunc("/account", e_account.DoCreateAccount).Methods("POST")
