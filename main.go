@@ -10,7 +10,8 @@ import (
   _ "github.com/go-sql-driver/mysql"
 
   "metagit.org/blizzlike/cmangos-api/modules/config"
-  "metagit.org/blizzlike/cmangos-api/modules/endpoints/account"
+  e_account "metagit.org/blizzlike/cmangos-api/modules/endpoints/account"
+  e_config "metagit.org/blizzlike/cmangos-api/modules/endpoints/config"
 )
 
 func main() {
@@ -48,14 +49,17 @@ func main() {
     os.Exit(3)
   }
   defer realmdDB.Close()
-  account.ApiDB = apiDB
-  account.RealmdDB = realmdDB
-  account.NeedInvite = cfg.NeedInvite
+  e_account.ApiDB = apiDB
+  e_account.RealmdDB = realmdDB
+  e_account.NeedInvite = cfg.NeedInvite
+  e_config.NeedInvite = cfg.NeedInvite
 
   router := mux.NewRouter()
-  router.HandleFunc("/account", account.DoCreateAccount).Methods("POST")
-  router.HandleFunc("/account/auth", account.DoAuth).Methods("POST")
-  router.HandleFunc("/account/invite", account.DoInvite).Methods("POST")
+  router.HandleFunc("/account", e_account.DoCreateAccount).Methods("POST")
+  router.HandleFunc("/account/auth", e_account.DoAuth).Methods("POST")
+  router.HandleFunc("/account/invite", e_account.DoInvite).Methods("POST")
+
+  router.HandleFunc("/config", e_config.DoConfig).Methods("GET")
 
   log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", cfg.Listen, cfg.Port), router))
 }
