@@ -3,11 +3,13 @@ package account
 import (
   "time"
   "database/sql"
+
+  "metagit.org/blizzlike/cmangos-api/modules/database"
 )
 
 func BasicAuth(username, password string) (int, error) {
   var id int
-  stmt, err := RealmdDB.Prepare(
+  stmt, err := database.RealmdDB.Prepare(
     `SELECT id FROM account
      WHERE UPPER(username) = UPPER(?) AND
      sha_pass_hash = SHA1(CONCAT(UPPER(?), ':', UPPER(?)));`)
@@ -26,7 +28,7 @@ func BasicAuth(username, password string) (int, error) {
 
 func InviteTokenAuth(token string) bool {
   var friend int
-  stmt, err := ApiDB.Prepare(
+  stmt, err := database.ApiDB.Prepare(
     "SELECT friend FROM invitetoken WHERE token = ? AND account IS NULL;")
   if err != nil {
     return false
@@ -43,7 +45,7 @@ func InviteTokenAuth(token string) bool {
 
 func TokenAuth(token string) (int, error) {
   var owner, expiry int
-  stmt, err := ApiDB.Prepare(
+  stmt, err := database.ApiDB.Prepare(
     "SELECT owner, expiry FROM authtoken WHERE token = ?;")
   if err != nil {
     return 0, err
@@ -58,7 +60,7 @@ func TokenAuth(token string) (int, error) {
   var stmtUpdate *sql.Stmt
   now := time.Now().Unix()
   if int(now) <= expiry {
-    stmtUpdate, err = ApiDB.Prepare(
+    stmtUpdate, err = database.ApiDB.Prepare(
       "UPDATE authtoken SET expiry = ? WHERE token = ?;")
     if err != nil {
       return 0, err
@@ -69,7 +71,7 @@ func TokenAuth(token string) (int, error) {
       return 0, err
     }
   } else {
-    stmtUpdate, err = ApiDB.Prepare(
+    stmtUpdate, err = database.ApiDB.Prepare(
       "DELETE FROM authtoken WHERE token = ?;")
     if err != nil {
       return 0, err
@@ -89,7 +91,7 @@ func TokenAuth(token string) (int, error) {
 func WriteAuthToken(token string, id int) error {
   t := time.Now()
   expiry := t.Unix() + 3600
-  stmt, err := ApiDB.Prepare(
+  stmt, err := database.ApiDB.Prepare(
     "INSERT INTO authtoken (token, owner, expiry) VALUES (?, ?, ?);")
   if err != nil {
     return err

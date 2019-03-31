@@ -1,11 +1,15 @@
 package account
 
+import (
+  "metagit.org/blizzlike/cmangos-api/modules/database"
+)
+
 type JsonInviteResp struct {
   Token string `json:"token"`
 }
 
 func AddAccountToInviteToken(token string, id int) error {
-  stmt, err := ApiDB.Prepare(
+  stmt, err := database.ApiDB.Prepare(
     "UPDATE invitetoken SET account = ? WHERE token = ?;")
   if err != nil {
     return err
@@ -21,7 +25,7 @@ func AddAccountToInviteToken(token string, id int) error {
 }
 
 func WriteInviteToken(token string, id int) error {
-  stmt, err := ApiDB.Prepare(
+  stmt, err := database.ApiDB.Prepare(
     "INSERT INTO invitetoken (token, friend) VALUES (?, ?);")
   if err != nil {
     return err

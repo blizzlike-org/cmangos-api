@@ -5,11 +5,10 @@ import (
   "log"
   "os"
   "net/http"
-  "database/sql"
   "github.com/gorilla/mux"
-  _ "github.com/go-sql-driver/mysql"
 
   "metagit.org/blizzlike/cmangos-api/modules/config"
+  "metagit.org/blizzlike/cmangos-api/modules/database"
   e_account "metagit.org/blizzlike/cmangos-api/modules/endpoints/account"
   e_config "metagit.org/blizzlike/cmangos-api/modules/endpoints/config"
 )
@@ -25,32 +24,12 @@ func main() {
     os.Exit(2)
   }
 
-  var apiDB, realmdDB *sql.DB
-  apiDB, err = sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
-    cfg.ApiDB.Username,
-    cfg.ApiDB.Password,
-    cfg.ApiDB.Hostname,
-    cfg.ApiDB.Port,
-    cfg.ApiDB.Database))
+  err = database.Open()
   if err != nil {
-    fmt.Fprintf(os.Stderr, "Cannot connect to api database (%v)\n")
+    fmt.Fprintf(os.Stderr, "%v\n", err)
     os.Exit(3)
   }
-  defer apiDB.Close()
-
-  realmdDB, err = sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
-    cfg.RealmdDB.Username,
-    cfg.RealmdDB.Password,
-    cfg.RealmdDB.Hostname,
-    cfg.RealmdDB.Port,
-    cfg.RealmdDB.Database))
-  if err != nil {
-    fmt.Fprintf(os.Stderr, "Cannot connect to realmd database (%v)\n")
-    os.Exit(3)
-  }
-  defer realmdDB.Close()
-  e_account.ApiDB = apiDB
-  e_account.RealmdDB = realmdDB
+  defer database.Close()
 
   router := mux.NewRouter()
   router.HandleFunc("/account", e_account.DoCreateAccount).Methods("POST")
