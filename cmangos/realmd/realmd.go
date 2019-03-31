@@ -7,6 +7,7 @@ import (
   "time"
 
   "metagit.org/blizzlike/cmangos-api/modules/config"
+  "metagit.org/blizzlike/cmangos-api/cmangos/realmd/realm"
 )
 
 type Realmd struct {
@@ -14,6 +15,11 @@ type Realmd struct {
   Port int `json:"port,omitempty"`
   State int `json:"state"`
   Lastcheck int `json:"lastcheck"`
+}
+
+type Realmlist struct {
+  Realmd Realmd `json:"realmd,omitempty"`
+  Realmlist []realm.Realm `json:"realmlist"`
 }
 
 func (r *Realmd) Check() error {

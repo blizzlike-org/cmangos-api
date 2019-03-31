@@ -6,14 +6,9 @@ import (
   "net/http"
   "os"
 
-  cmangos_realm "metagit.org/blizzlike/cmangos-api/cmangos/realm"
   "metagit.org/blizzlike/cmangos-api/cmangos/realmd"
+  cmangos_realm "metagit.org/blizzlike/cmangos-api/cmangos/realmd/realm"
 )
-
-type JsonRealmlistResp struct {
-  Realmd realmd.Realmd `json:"realmd,omitempty"`
-  Realmlist []cmangos_realm.Realm `json:"realmlist"`
-}
 
 func DoRealmlist(w http.ResponseWriter, r *http.Request) {
   realmlist, err := cmangos_realm.FetchRealms()
@@ -23,7 +18,7 @@ func DoRealmlist(w http.ResponseWriter, r *http.Request) {
     return
   }
 
-  var resp JsonRealmlistResp
+  var resp realmd.Realmlist
   resp.Realmd = realmd.GetRealmd()
   resp.Realmlist = realmlist
 
