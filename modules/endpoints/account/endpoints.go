@@ -9,13 +9,13 @@ import (
   "os"
 
   "github.com/google/uuid"
-)
 
-var NeedInvite bool
+  "metagit.org/blizzlike/cmangos-api/modules/config"
+)
 
 func DoCreateAccount(w http.ResponseWriter, r *http.Request) {
   var auth []string
-  if NeedInvite {
+  if config.Cfg.NeedInvite {
     auth_header := r.Header.Get("Authorization")
     auth = strings.Split(auth_header, " ")
 
@@ -49,7 +49,7 @@ func DoCreateAccount(w http.ResponseWriter, r *http.Request) {
     return
   }
 
-  if NeedInvite {
+  if config.Cfg.NeedInvite {
     AddAccountToInviteToken(auth[1], id)
   }
 

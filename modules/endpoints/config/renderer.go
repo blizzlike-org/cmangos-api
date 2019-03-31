@@ -3,6 +3,8 @@ package config
 import (
   "encoding/json"
   "net/http"
+
+  "metagit.org/blizzlike/cmangos-api/modules/config"
 )
 
 type JsonConfigResp struct {
@@ -10,13 +12,10 @@ type JsonConfigResp struct {
   Realmd string `json:"realmd,omitempty"`
 }
 
-var NeedInvite bool
-var Realmd string
-
 func DoConfig(w http.ResponseWriter, r *http.Request) {
   var resp JsonConfigResp
-  resp.NeedInvite = NeedInvite
-  resp.Realmd = Realmd
+  resp.NeedInvite = config.Cfg.NeedInvite
+  resp.Realmd = config.Cfg.Cmangos.Realmd
 
   w.Header().Add("Content-Type", "application/json")
   w.WriteHeader(http.StatusOK)
