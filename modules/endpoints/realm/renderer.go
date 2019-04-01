@@ -4,6 +4,8 @@ import (
   "encoding/json"
   "net/http"
 
+  "metagit.org/blizzlike/cmangos-api/cmangos/iface"
+
   "metagit.org/blizzlike/cmangos-api/cmangos/realmd"
   cmangos_realm "metagit.org/blizzlike/cmangos-api/cmangos/realmd/realm"
 )
@@ -11,7 +13,7 @@ import (
 func DoRealmlist(w http.ResponseWriter, r *http.Request) {
   realmlist := cmangos_realm.GetRealms()
 
-  var resp realmd.Realmlist
+  var resp iface.Realmlist
   resp.Realmd = realmd.GetRealmd()
   resp.Realmlist = realmlist
 

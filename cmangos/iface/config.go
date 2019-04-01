@@ -1,4 +1,4 @@
-package config
+package iface
 
 type InterfaceConfig struct {
   NeedInvite bool `json:"invite,omitempty"`

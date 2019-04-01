@@ -7,22 +7,13 @@ import (
   "time"
   "database/sql"
 
+  "metagit.org/blizzlike/cmangos-api/cmangos/iface"
+
   "metagit.org/blizzlike/cmangos-api/modules/database"
   "metagit.org/blizzlike/cmangos-api/modules/config"
 )
 
-type Realm struct {
-  Id int `json:"id,omitempty"`
-  Name string `json:"name,omitempty"`
-  Address string `json:"address,omitempty"`
-  Port int `json:"port,omitempty"`
-  Icon int `json:"icon,omitempty"`
-  Population int `json:"population,omitempty"`
-  State int `json:"state"`
-  Lastcheck int `json:"lastcheck"`
-}
-
-func (r *Realm) Check() error {
+func Check(r *iface.Realm) error {
   d := net.Dialer{Timeout: time.Duration(config.Cfg.Cmangos.Timeout) * time.Second}
   c, err := d.Dial("tcp", fmt.Sprintf("%s:%d", r.Address, r.Port))
   r.Lastcheck = int(time.Now().Unix())
@@ -37,10 +28,10 @@ func (r *Realm) Check() error {
   return nil
 }
 
-var realmlist []Realm
+var realmlist []iface.Realm
 
-func FetchRealms() ([]Realm, error) {
-  var rl []Realm
+func FetchRealms() ([]iface.Realm, error) {
+  var rl []iface.Realm
   stmt, err := database.RealmdDB.Prepare(
     `SELECT id, name, address, port, icon, population
      FROM realmlist
@@ -53,21 +44,21 @@ func FetchRealms() ([]Realm, error) {
   var rows *sql.Rows
   rows, err = stmt.Query()
   for rows.Next() {
-    var realm Realm
+    var realm iface.Realm
     err = rows.Scan(&realm.Id, &realm.Name, &realm.Address,
       &realm.Port, &realm.Icon, &realm.Population)
     if err != nil {
       return rl, err
     }
 
-    realm.Check()
+    Check(&realm)
     rl = append(rl, realm)
   }
 
   return rl, nil
 }
 
-func GetRealms() []Realm {
+func GetRealms() []iface.Realm {
   return realmlist
 }
 
