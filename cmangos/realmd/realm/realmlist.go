@@ -8,6 +8,7 @@ import (
   "database/sql"
 
   "metagit.org/blizzlike/cmangos-api/modules/database"
+  "metagit.org/blizzlike/cmangos-api/modules/config"
 )
 
 type Realm struct {
@@ -22,7 +23,9 @@ type Realm struct {
 }
 
 func (r *Realm) Check() error {
-  c, err := net.Dial("tcp", fmt.Sprintf("%s:%d", r.Address, r.Port))
+  d := net.Dialer{Timeout: time.Duration(config.Cfg.Cmangos.Timeout) * time.Second}
+  c, err := d.Dial("tcp", fmt.Sprintf("%s:%d", r.Address, r.Port))
+  r.Lastcheck = int(time.Now().Unix())
   if err != nil {
     fmt.Fprintf(os.Stderr, "Cannot connect to realm %s (%v)\n", r.Name, err)
     r.State = 0
@@ -31,18 +34,19 @@ func (r *Realm) Check() error {
   defer c.Close()
 
   r.State = 1
-  r.Lastcheck = int(time.Now().Unix())
   return nil
 }
 
+var realmlist []Realm
+
 func FetchRealms() ([]Realm, error) {
-  var realmlist []Realm
+  var rl []Realm
   stmt, err := database.RealmdDB.Prepare(
     `SELECT id, name, address, port, icon, population
      FROM realmlist
      ORDER BY id ASC;`)
   if err != nil {
-    return realmlist, err
+    return rl, err
   }
   defer stmt.Close()
 
@@ -53,12 +57,31 @@ func FetchRealms() ([]Realm, error) {
     err = rows.Scan(&realm.Id, &realm.Name, &realm.Address,
       &realm.Port, &realm.Icon, &realm.Population)
     if err != nil {
-      return realmlist, err
+      return rl, err
     }
 
     realm.Check()
-    realmlist = append(realmlist, realm)
+    rl = append(rl, realm)
   }
 
-  return realmlist, nil
+  return rl, nil
+}
+
+func GetRealms() []Realm {
+  return realmlist
+}
+
+func PollRealmStates() {
+  t := time.Duration(1 * time.Second)
+  for range time.Tick(t){
+    rl, err := FetchRealms()
+    if err != nil {
+      fmt.Fprintf(os.Stderr, "Cannot fetch realmlist (%v)\n", err)
+      continue
+    }
+    fmt.Fprintf(os.Stdout, "Fetched realmlist\n")
+
+    realmlist = rl
+    t = time.Duration(config.Cfg.Cmangos.Interval) * time.Second
+  }
 }

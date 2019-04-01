@@ -7,6 +7,8 @@ import (
   "net/http"
   "github.com/gorilla/mux"
 
+  "metagit.org/blizzlike/cmangos-api/cmangos/realmd/realm"
+
   "metagit.org/blizzlike/cmangos-api/modules/config"
   "metagit.org/blizzlike/cmangos-api/modules/database"
   e_account "metagit.org/blizzlike/cmangos-api/modules/endpoints/account"
@@ -31,6 +33,8 @@ func main() {
     os.Exit(3)
   }
   defer database.Close()
+
+  go realm.PollRealmStates()
 
   router := mux.NewRouter()
   router.HandleFunc("/account", e_account.DoCreateAccount).Methods("POST")

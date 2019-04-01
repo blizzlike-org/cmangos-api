@@ -15,6 +15,8 @@ type ConfigDB struct {
 type ConfigCmangos struct {
   Realmd string
   Port int
+  Timeout int
+  Interval int
 }
 
 type Config struct {
@@ -53,6 +55,8 @@ func Read(file string) (Config, error) {
 
   Cfg.Cmangos.Realmd = c.Section("cmangos").Key("realmd").MustString("logon.example.org")
   Cfg.Cmangos.Port = c.Section("cmangos").Key("port").MustInt(3724)
+  Cfg.Cmangos.Timeout = c.Section("cmangos").Key("timeout").MustInt(10)
+  Cfg.Cmangos.Interval = c.Section("cmangos").Key("interval").MustInt(300)
 
   return Cfg, nil
 }

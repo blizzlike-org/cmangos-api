@@ -22,3 +22,5 @@ database = cmangosrealmd
 [cmangos]
 realmd = logon.example.org
 port = 3724
+timeout = 10
+interval = 300
