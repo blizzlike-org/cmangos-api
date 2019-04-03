@@ -9,12 +9,24 @@ import (
   "metagit.org/blizzlike/cmangos-api/modules/config"
 )
 
+type RealmDB struct {
+  Name string
+  Character *sql.DB
+  World *sql.DB
+}
+
 var ApiDB *sql.DB
 var RealmdDB *sql.DB
+var RealmsDB []RealmDB
 
 func Close() {
   ApiDB.Close()
   RealmdDB.Close()
+
+  for _, v := range RealmsDB {
+    v.Character.Close()
+    v.World.Close()
+  }
 }
 
 func Open() error {
@@ -40,6 +52,28 @@ func Open() error {
     fmt.Fprintf(os.Stderr, "Cannot connect to realmd database (%v)\n", err)
     ApiDB.Close()
     return err
+  }
+
+  var db RealmDB
+  for _, v := range config.Cfg.Cmangos.Realms {
+    db.Name = v.Name
+    db.Character, err = sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
+      v.Username, v.Password,
+      v.Hostname, v.Port,
+      v.Character))
+    if err != nil {
+      db.Character.Close()
+      return err
+    }
+    db.World, err = sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
+      v.Username, v.Password,
+      v.Hostname, v.Port,
+      v.World))
+    if err != nil {
+      db.World.Close()
+      return err
+    }
+    RealmsDB = append(RealmsDB, db)
   }
 
   return nil

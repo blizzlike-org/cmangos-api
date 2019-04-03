@@ -24,3 +24,21 @@ realmd = logon.example.org
 port = 3724
 timeout = 10
 interval = 300
+
+realms = classic,tbc
+
+[cmangos.classic]
+username = cmangos
+password = cmangos
+hostname = localhost
+port = 3306
+character = classicchars
+world = classicworld
+
+[cmangos.tbc]
+username = cmangos
+password = cmangos
+hostname = localhost
+port = 3306
+character = tbcchars
+world = tbcworld

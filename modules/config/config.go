@@ -17,6 +17,17 @@ type ConfigCmangos struct {
   Port int
   Timeout int
   Interval int
+  Realms []ConfigCmangosRealm
+}
+
+type ConfigCmangosRealm struct{
+  Name string
+  Username string
+  Password string
+  Hostname string
+  Port int
+  Character string
+  World string
 }
 
 type Config struct {
@@ -57,6 +68,21 @@ func Read(file string) (Config, error) {
   Cfg.Cmangos.Port = c.Section("cmangos").Key("port").MustInt(3724)
   Cfg.Cmangos.Timeout = c.Section("cmangos").Key("timeout").MustInt(10)
   Cfg.Cmangos.Interval = c.Section("cmangos").Key("interval").MustInt(300)
+  realms := c.Section("cmangos").Key("realms").Strings(",")
+  if len(realms) != 0 {
+    for _, v := range realms {
+      realm := ConfigCmangosRealm{
+        Name: v,
+        Hostname: c.Section("cmangos." + v).Key("hostname").MustString("127.0.0.1"),
+        Port: c.Section("cmangos." + v).Key("port").MustInt(3306),
+        Username: c.Section("cmangos." + v).Key("username").MustString("mangos"),
+        Password: c.Section("cmangos." + v).Key("password").MustString("mangos"),
+        Character: c.Section("cmangos." + v).Key("character").MustString("character"),
+        World: c.Section("cmangos." + v).Key("world").MustString("world"),
+      }
+      Cfg.Cmangos.Realms = append(Cfg.Cmangos.Realms, realm)
+    }
+  }
 
   return Cfg, nil
 }
