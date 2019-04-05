@@ -1,41 +1,59 @@
 package account
 
 import (
-  "metagit.org/blizzlike/cmangos-api/modules/database"
+  "encoding/json"
+  "net/http"
+  "fmt"
+  "strings"
+  "os"
+
+  api_account "metagit.org/blizzlike/cmangos-api/cmangos/api/account"
 )
 
-type JsonInviteResp struct {
-  Token string `json:"token"`
+func AuthenticateByInviteToken(w http.ResponseWriter, r *http.Request) (string, error) {
+  header := r.Header.Get("Authorization")
+  auth := strings.Split(header, " ")
+
+  if len(auth) != 2 {
+    w.WriteHeader(http.StatusBadRequest)
+    return "", fmt.Errorf("Invalid/Missing Authorization header")
+  }
+
+  if !strings.EqualFold(auth[0], "token") {
+    errmsg := "Authentication method not supported"
+    fmt.Fprintf(os.Stderr, "%s\n", errmsg)
+    w.WriteHeader(http.StatusBadRequest)
+    return "", fmt.Errorf(errmsg)
+  }
+
+  if !api_account.InviteTokenAuth(auth[1]) {
+    errmsg := fmt.Sprintf("Cannot authenticate invite %s", auth[1])
+    fmt.Fprintf(os.Stderr, "%s\n", errmsg)
+    w.WriteHeader(http.StatusUnauthorized)
+    return "", fmt.Errorf(errmsg)
+  }
+
+  return auth[1], nil
 }
 
-func AddAccountToInviteToken(token string, id int) error {
-  stmt, err := database.ApiDB.Prepare(
-    "UPDATE invitetoken SET account = ? WHERE token = ?;")
+func DoInvite(w http.ResponseWriter, r *http.Request) {
+  id, err := AuthenticateByToken(w, r)
   if err != nil {
-    return err
-  }
-  defer stmt.Close()
-
-  _, err = stmt.Exec(id, token)
-  if err != nil {
-    return err
+    return
   }
 
-  return nil
-}
+  fmt.Fprintf(os.Stdout, "Authenticated id %d\n", id)
 
-func WriteInviteToken(token string, id int) error {
-  stmt, err := database.ApiDB.Prepare(
-    "INSERT INTO invitetoken (token, friend) VALUES (?, ?);")
+  token, err := api_account.WriteInviteToken(id)
   if err != nil {
-    return err
-  }
-  defer stmt.Close()
-
-  _, err = stmt.Exec(token, id)
-  if err != nil {
-    return err
+    fmt.Fprintf(os.Stderr, "Cannot write invite token (%v)\n", err)
+    w.WriteHeader(http.StatusInternalServerError)
+    return
   }
 
-  return nil
+  var inv = api_account.InviteInfo{token}
+  w.Header().Add("Content-Type", "application/json")
+  w.WriteHeader(http.StatusCreated)
+  json.NewEncoder(w).Encode(inv)
+  return
 }

@@ -4,14 +4,15 @@ import (
   "encoding/json"
   "net/http"
 
-  "metagit.org/blizzlike/cmangos-api/cmangos/iface"
+  api_config "metagit.org/blizzlike/cmangos-api/cmangos/api/config"
   "metagit.org/blizzlike/cmangos-api/modules/config"
 )
 
 func DoConfig(w http.ResponseWriter, r *http.Request) {
-  var resp iface.InterfaceConfig
-  resp.NeedInvite = config.Cfg.NeedInvite
-  resp.RealmdAddress = config.Cfg.Cmangos.Realmd
+  var resp api_config.ApiConfig
+  resp.RequireInvite = config.Settings.Api.RequireInvite
+  resp.RealmdAddress = config.Settings.Realmd.Address
+  resp.RealmdPort = config.Settings.Realmd.Port
 
   w.Header().Add("Content-Type", "application/json")
   w.WriteHeader(http.StatusOK)

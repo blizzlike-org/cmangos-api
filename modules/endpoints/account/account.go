@@ -1,99 +1,91 @@
 package account
 
 import (
-  "regexp"
+  "encoding/json"
+  "net/http"
   "fmt"
-  "database/sql"
+  "strings"
+  "os"
 
-  "metagit.org/blizzlike/cmangos-api/modules/database"
+  api_account "metagit.org/blizzlike/cmangos-api/cmangos/api/account"
+  cmangos_account "metagit.org/blizzlike/cmangos-api/cmangos/realmd/account"
+  "metagit.org/blizzlike/cmangos-api/modules/config"
 )
 
-type JsonAccountReq struct {
-  Username string `json:"username,omitempty"`
-  Password string `json:"password,omitempty"`
-  Repeat string `json:"repeat,omitempty"`
-  Email string `json:"email,omitempty"`
-}
-
-type JsonAccountResp struct {
-  Username bool `json:"username"`
-  Password bool `json:"password"`
-  Repeat bool `json:"repeat"`
-  Email bool `json:"email"`
-}
-
-func AccountExists(username string) bool {
+func AuthenticateByToken(w http.ResponseWriter, r *http.Request) (int, error) {
+  header := r.Header.Get("Authorization")
+  auth := strings.Split(header, " ")
   var id int
-  stmt, err := database.RealmdDB.Prepare(
-    "SELECT id FROM account WHERE username = ?;")
-  if err != nil {
-    return false
-  }
-  defer stmt.Close()
 
-  err = stmt.QueryRow(username).Scan(&id)
-  if err != nil {
-    return false
+  if len(auth) != 2 {
+    w.WriteHeader(http.StatusBadRequest)
+    return id, fmt.Errorf("Invalid/Missing Authorization header")
   }
 
-  return true
+  if !strings.EqualFold(auth[0], "token") {
+    errmsg := fmt.Sprintf("AUthentication method not supported (%s)", auth[1])
+    fmt.Fprintf(os.Stderr, "%s\n", errmsg)
+    w.WriteHeader(http.StatusBadRequest)
+    return id, fmt.Errorf(errmsg)
+  }
+
+  id, err := api_account.AuthenticateByToken(auth[1])
+  if err != nil {
+    fmt.Fprintf(os.Stderr, "Cannot authenticate %s (%v)\n", auth[1], err)
+    w.WriteHeader(http.StatusUnauthorized)
+    return id, err
+  }
+
+  return id, nil
 }
 
-func CreateAccount(account JsonAccountReq, resp *JsonAccountResp) (int, error) {
-  if account.Username == "" || len(account.Username) > 16 ||
-     AccountExists(account.Username) {
-    resp.Username = false
-  }
-  if account.Password == "" || len(account.Password) > 16 {
-    resp.Password = false
-  }
-  if account.Password != account.Repeat {
-    resp.Repeat = false
+func DoCreateAccount(w http.ResponseWriter, r *http.Request) {
+  var token string
+  var err error
+  if config.Settings.Api.RequireInvite {
+    token, err = AuthenticateByInviteToken(w, r)
+    if err != nil {
+      return
+    }
   }
 
-  re := regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
-  if account.Email == "" || !re.MatchString(account.Email) ||
-     EmailExists(account.Email) {
-    resp.Email = false
-  }
-
-  if !resp.Username || !resp.Password || !resp.Repeat || !resp.Email {
-    return 0, fmt.Errorf("Cannot create account")
-  }
-
-  stmt, err := database.RealmdDB.Prepare(
-    `INSERT INTO account
-     (username, sha_pass_hash, email, joindate)
-     VALUES (UPPER(?), SHA1(CONCAT(UPPER(?), ':', UPPER(?))), LOWER(?), NOW());`)
+  var account cmangos_account.AccountInfo
+  _ = json.NewDecoder(r.Body).Decode(&account)
+  ae, err := cmangos_account.CreateAccount(&account)
   if err != nil {
-    return 0, err
-  }
-  defer stmt.Close()
-
-  var res sql.Result
-  res, err = stmt.Exec(
-    account.Username, account.Username, account.Password, account.Email)
-  if err != nil {
-    return 0, err
+    w.Header().Add("Content-Type", "application/json")
+    w.WriteHeader(http.StatusBadRequest)
+    json.NewEncoder(w).Encode(ae)
+    return
   }
 
-  id, _ := res.LastInsertId()
-  return int(id), nil
+  if config.Settings.Api.RequireInvite {
+    api_account.AddAccountToInviteToken(token, account.Id)
+  }
+
+  account.Password = ""
+  account.Repeat = ""
+
+  w.Header().Add("Content-Type", "application/json")
+  w.WriteHeader(http.StatusCreated)
+  json.NewEncoder(w).Encode(account)
+  return
 }
 
-func EmailExists(email string) bool {
-  var id int
-  stmt, err := database.RealmdDB.Prepare(
-    "SELECT id FROM account WHERE email = ?;")
+func DoGetAccount(w http.ResponseWriter, r *http.Request) {
+  id, err := AuthenticateByToken(w, r)
   if err != nil {
-    return false
-  }
-  defer stmt.Close()
-
-  err = stmt.QueryRow(email).Scan(&id)
-  if err != nil {
-    return false
+    return
   }
 
-  return true
+  a, err := cmangos_account.GetAccountInfo(id)
+  if err != nil {
+    w.WriteHeader(http.StatusInternalServerError)
+    return
+  }
+
+  w.Header().Add("Content-Type", "application/json")
+  w.WriteHeader(http.StatusOK)
+  json.NewEncoder(w).Encode(a)
+  return
 }

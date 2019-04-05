@@ -9,21 +9,21 @@ import (
   "metagit.org/blizzlike/cmangos-api/modules/config"
 )
 
-type RealmDB struct {
-  Name string
+type MangosdDB struct {
+  Id int
   Character *sql.DB
   World *sql.DB
 }
 
-var ApiDB *sql.DB
-var RealmdDB *sql.DB
-var RealmsDB []RealmDB
+var Api *sql.DB
+var Realmd *sql.DB
+var Mangosd []MangosdDB
 
 func Close() {
-  ApiDB.Close()
-  RealmdDB.Close()
+  Api.Close()
+  Realmd.Close()
 
-  for _, v := range RealmsDB {
+  for _, v := range Mangosd {
     v.Character.Close()
     v.World.Close()
   }
@@ -31,49 +31,49 @@ func Close() {
 
 func Open() error {
   var err error
-  ApiDB, err = sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
-    config.Cfg.ApiDB.Username,
-    config.Cfg.ApiDB.Password,
-    config.Cfg.ApiDB.Hostname,
-    config.Cfg.ApiDB.Port,
-    config.Cfg.ApiDB.Database))
+  Api, err = sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
+    config.Settings.Api.Db.Username,
+    config.Settings.Api.Db.Password,
+    config.Settings.Api.Db.Address,
+    config.Settings.Api.Db.Port,
+    config.Settings.Api.Db.Database))
   if err != nil {
     fmt.Fprintf(os.Stderr, "Cannot connect to api database (%v)\n", err)
     return err
   }
 
-  RealmdDB, err = sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
-    config.Cfg.RealmdDB.Username,
-    config.Cfg.RealmdDB.Password,
-    config.Cfg.RealmdDB.Hostname,
-    config.Cfg.RealmdDB.Port,
-    config.Cfg.RealmdDB.Database))
+  Realmd, err = sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
+    config.Settings.Realmd.Db.Username,
+    config.Settings.Realmd.Db.Password,
+    config.Settings.Realmd.Db.Address,
+    config.Settings.Realmd.Db.Port,
+    config.Settings.Realmd.Db.Database))
   if err != nil {
     fmt.Fprintf(os.Stderr, "Cannot connect to realmd database (%v)\n", err)
-    ApiDB.Close()
+    Api.Close()
     return err
   }
 
-  var db RealmDB
-  for _, v := range config.Cfg.Cmangos.Realms {
-    db.Name = v.Name
+  var db MangosdDB
+  for _, v := range config.Settings.Mangosd {
+    db.Id = v.Id
     db.Character, err = sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
-      v.Username, v.Password,
-      v.Hostname, v.Port,
-      v.Character))
+      v.CharacterDb.Username, v.CharacterDb.Password,
+      v.CharacterDb.Address, v.CharacterDb.Port,
+      v.CharacterDb.Database))
     if err != nil {
       db.Character.Close()
       return err
     }
     db.World, err = sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
-      v.Username, v.Password,
-      v.Hostname, v.Port,
-      v.World))
+      v.WorldDb.Username, v.WorldDb.Password,
+      v.WorldDb.Address, v.WorldDb.Port,
+      v.WorldDb.Database))
     if err != nil {
       db.World.Close()
       return err
     }
-    RealmsDB = append(RealmsDB, db)
+    Mangosd = append(Mangosd, db)
   }
 
   return nil

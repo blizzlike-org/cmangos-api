@@ -1,44 +1,62 @@
-[server]
+[api]
 listen = 127.0.0.1
 port = 5556
-
-[account]
-needInvite = false
-
-[apidb]
-username = cmangos-api
-password = cmangos-api
-hostname = localhost
-port = 3306
-database = cmangos-api
-
-[realmddb]
-username = cmangos
-password = cmangos
-hostname = localhost
-port = 3306
-database = cmangosrealmd
-
-[cmangos]
-realmd = logon.example.org
-port = 3724
+requireInvite = false
+expiry = 3600
 timeout = 10
 interval = 300
 
+[api.mysql]
+hostname = localhost
+port = 3306
+username = cmangos-api
+password = cmangos-api
+database = cmangos-api
+
+[realmd]
+hostname = logon.example.org
+port = 3724
+
+[realmd.mysql]
+hostname = localhost
+port = 3306
+username = cmangos
+password = cmangos
+database = cmangosrealmd
+
+[mangosd]
 realms = classic,tbc
 
-[cmangos.classic]
-username = cmangos
-password = cmangos
-hostname = localhost
-port = 3306
-character = classicchars
-world = classicworld
+[mangosd.classic]
+id = 1
 
-[cmangos.tbc]
-username = cmangos
-password = cmangos
+[mangosd.classic.character.mysql]
 hostname = localhost
 port = 3306
-character = tbcchars
-world = tbcworld
+username = cmangos
+password = cmangos
+database = classicchars
+
+[mangosd.classic.world.mysql]
+hostname = localhost
+port = 3306
+username = cmangos
+password = cmangos
+database = classicworld
+
+[mangosd.tbc]
+id = 2
+
+[mangosd.tbc.character.mysql]
+hostname = localhost
+port = 3306
+username = cmangos
+password = cmangos
+database = tbcchars
+
+[mangosd.tbc.world.mysql]
+hostname = localhost
+port = 3306
+username = cmangos
+password = cmangos
+database = tbcworld

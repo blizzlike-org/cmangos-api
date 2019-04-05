@@ -4,85 +4,103 @@ import (
   ini "gopkg.in/ini.v1"
 )
 
-type ConfigDB struct {
+type ApiConfig struct {
+  Listen string
+  Port int
+  Db DBConfig
+  RequireInvite bool
+  AuthTokenExpiry int
+  CheckTimeout int
+  CheckInterval int
+}
+
+type DBConfig struct {
   Username string
   Password string
-  Hostname string
+  Address string
   Port int
   Database string
 }
 
-type ConfigCmangos struct {
-  Realmd string
+type RealmdConfig struct {
+  Address string
   Port int
-  Timeout int
-  Interval int
-  Realms []ConfigCmangosRealm
+  Db DBConfig
 }
 
-type ConfigCmangosRealm struct{
-  Name string
-  Username string
-  Password string
-  Hostname string
-  Port int
-  Character string
-  World string
+type MangosdConfig struct{
+  Id int
+  CharacterDb DBConfig
+  WorldDb DBConfig
 }
 
 type Config struct {
-  Listen string
-  Port int
-  ApiDB ConfigDB
-  RealmdDB ConfigDB
-  NeedInvite bool
-  Cmangos ConfigCmangos
+  Api ApiConfig
+  Realmd RealmdConfig
+  Mangosd []MangosdConfig
 }
 
-var Cfg Config
+var Settings Config
 
 func Read(file string) (Config, error) {
   c, err := ini.Load(file)
   if err != nil {
-    return Cfg, err
+    return Settings, err
   }
 
-  Cfg.Listen = c.Section("server").Key("listen").MustString("127.0.0.1")
-  Cfg.Port = c.Section("server").Key("port").MustInt(5556)
+  // [api]
+  Settings.Api.Listen = c.Section("api").Key("listen").MustString("127.0.0.1")
+  Settings.Api.Port = c.Section("api").Key("port").MustInt(5556)
+  Settings.Api.RequireInvite = c.Section("api").Key("requireInvite").MustBool(false)
+  Settings.Api.AuthTokenExpiry = c.Section("api").Key("expiry").MustInt(3600)
+  Settings.Api.CheckTimeout = c.Section("api").Key("timeout").MustInt(10)
+  Settings.Api.CheckInterval = c.Section("api").Key("interval").MustInt(300)
 
-  Cfg.ApiDB.Hostname = c.Section("apidb").Key("hostname").MustString("127.0.0.1")
-  Cfg.ApiDB.Port = c.Section("apidb").Key("port").MustInt(3306)
-  Cfg.ApiDB.Username = c.Section("apidb").Key("username").MustString("cmangos-api")
-  Cfg.ApiDB.Password = c.Section("apidb").Key("password").MustString("cmangos-api")
-  Cfg.ApiDB.Database = c.Section("apidb").Key("database").MustString("cmangos-api")
+  // [api.mysql]
+  Settings.Api.Db.Address = c.Section("api.mysql").Key("hostname").MustString("127.0.0.1")
+  Settings.Api.Db.Port = c.Section("api.mysql").Key("port").MustInt(3306)
+  Settings.Api.Db.Username = c.Section("api.mysql").Key("username").MustString("cmangos-api")
+  Settings.Api.Db.Password = c.Section("api.mysql").Key("password").MustString("cmangos-api")
+  Settings.Api.Db.Database = c.Section("api.mysql").Key("database").MustString("cmangos-api")
 
-  Cfg.RealmdDB.Hostname = c.Section("realmddb").Key("hostname").MustString("127.0.0.1")
-  Cfg.RealmdDB.Port = c.Section("realmddb").Key("port").MustInt(3306)
-  Cfg.RealmdDB.Username = c.Section("realmddb").Key("username").MustString("mangos")
-  Cfg.RealmdDB.Password = c.Section("realmddb").Key("password").MustString("mangos")
-  Cfg.RealmdDB.Database = c.Section("realmddb").Key("database").MustString("realmd")
+  // [realmd]
+  Settings.Realmd.Address = c.Section("realmd").Key("hostname").MustString("logon.example.org")
+  Settings.Realmd.Port = c.Section("realmd").Key("port").MustInt(3724)
 
-  Cfg.NeedInvite = c.Section("account").Key("needInvite").MustBool(false)
+  // [realmd.mysql]
+  Settings.Realmd.Db.Address = c.Section("realmd.mysql").Key("hostname").MustString("127.0.0.1")
+  Settings.Realmd.Db.Port = c.Section("realmd.mysql").Key("port").MustInt(3306)
+  Settings.Realmd.Db.Username = c.Section("realmd.mysql").Key("username").MustString("mangos")
+  Settings.Realmd.Db.Password = c.Section("realmd.mysql").Key("password").MustString("mangos")
+  Settings.Realmd.Db.Database = c.Section("realmd.mysql").Key("database").MustString("realmd")
 
-  Cfg.Cmangos.Realmd = c.Section("cmangos").Key("realmd").MustString("logon.example.org")
-  Cfg.Cmangos.Port = c.Section("cmangos").Key("port").MustInt(3724)
-  Cfg.Cmangos.Timeout = c.Section("cmangos").Key("timeout").MustInt(10)
-  Cfg.Cmangos.Interval = c.Section("cmangos").Key("interval").MustInt(300)
-  realms := c.Section("cmangos").Key("realms").Strings(",")
+  // [mangosd]
+  realms := c.Section("mangosd").Key("realms").Strings(",")
+
+  // [mangosd.<realm>.character.mysql]
+  // [mangosd.<realm>.world.mysql]
   if len(realms) != 0 {
     for _, v := range realms {
-      realm := ConfigCmangosRealm{
-        Name: v,
-        Hostname: c.Section("cmangos." + v).Key("hostname").MustString("127.0.0.1"),
-        Port: c.Section("cmangos." + v).Key("port").MustInt(3306),
-        Username: c.Section("cmangos." + v).Key("username").MustString("mangos"),
-        Password: c.Section("cmangos." + v).Key("password").MustString("mangos"),
-        Character: c.Section("cmangos." + v).Key("character").MustString("character"),
-        World: c.Section("cmangos." + v).Key("world").MustString("world"),
+      realm := MangosdConfig{
+        Id: c.Section("mangosd." + v).Key("id").MustInt(1),
+	CharacterDb: DBConfig{
+          Address: c.Section("mangosd." + v + ".character.mysql").Key("hostname").MustString("127.0.0.1"),
+          Port: c.Section("mangosd." + v + ".character.mysql").Key("port").MustInt(3306),
+          Username: c.Section("mangosd." + v + ".character.mysql").Key("username").MustString("mangos"),
+          Password: c.Section("mangosd." + v + ".character.mysql").Key("password").MustString("mangos"),
+          Database: c.Section("mangosd." + v + ".character.mysql").Key("database").MustString("character"),
+	},
+	WorldDb: DBConfig{
+          Address: c.Section("mangosd." + v + ".world.mysql").Key("hostname").MustString("127.0.0.1"),
+          Port: c.Section("mangosd." + v + ".world.mysql").Key("port").MustInt(3306),
+          Username: c.Section("mangosd." + v + ".world.mysql").Key("username").MustString("mangos"),
+          Password: c.Section("mangosd." + v + ".world.mysql").Key("password").MustString("mangos"),
+          Database: c.Section("mangosd." + v + ".world.mysql").Key("database").MustString("world"),
+	},
       }
-      Cfg.Cmangos.Realms = append(Cfg.Cmangos.Realms, realm)
+      Settings.Mangosd = append(Settings.Mangosd, realm)
     }
   }
 
-  return Cfg, nil
+  return Settings, nil
 }

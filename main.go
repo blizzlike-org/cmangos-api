@@ -4,10 +4,11 @@ import (
   "fmt"
   "log"
   "os"
+  "time"
   "net/http"
   "github.com/gorilla/mux"
 
-  "metagit.org/blizzlike/cmangos-api/cmangos/realmd/realm"
+  cmangos_realm "metagit.org/blizzlike/cmangos-api/cmangos/realmd/realm"
 
   "metagit.org/blizzlike/cmangos-api/modules/config"
   "metagit.org/blizzlike/cmangos-api/modules/database"
@@ -21,7 +22,7 @@ func main() {
     fmt.Fprintf(os.Stderr, "USAGE: %s <config>\n", os.Args[0])
     os.Exit(1)
   }
-  cfg, err := config.Read(os.Args[1])
+  _, err := config.Read(os.Args[1])
   if err != nil {
     fmt.Fprintf(os.Stderr, "Failed to read file %v\n", err)
     os.Exit(2)
@@ -34,9 +35,11 @@ func main() {
   }
   defer database.Close()
 
-  go realm.PollRealmStates()
+  go cmangos_realm.PollRealmStates(
+    time.Duration(config.Settings.Api.CheckInterval))
 
   router := mux.NewRouter()
+  router.HandleFunc("/account", e_account.DoGetAccount).Methods("GET")
   router.HandleFunc("/account", e_account.DoCreateAccount).Methods("POST")
   router.HandleFunc("/account/auth", e_account.DoAuth).Methods("POST")
   router.HandleFunc("/account/invite", e_account.DoInvite).Methods("POST")
@@ -45,5 +48,6 @@ func main() {
 
   router.HandleFunc("/realm", e_realm.DoRealmlist).Methods("GET")
 
-  log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", cfg.Listen, cfg.Port), router))
+  log.Fatal(http.ListenAndServe(
+    fmt.Sprintf("%s:%d", config.Settings.Api.Listen, config.Settings.Api.Port), router))
 }
