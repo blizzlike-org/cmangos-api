@@ -42,6 +42,7 @@ func main() {
   router := mux.NewRouter()
   router.HandleFunc("/account", e_account.DoGetAccount).Methods("GET")
   router.HandleFunc("/account", e_account.DoCreateAccount).Methods("POST")
+  router.HandleFunc("/account/auth", e_account.DoAuthVerify).Methods("GET")
   router.HandleFunc("/account/auth", e_account.DoAuth).Methods("POST")
   router.HandleFunc("/account/invite", e_account.DoInvite).Methods("POST")
 

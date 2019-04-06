@@ -63,3 +63,14 @@ func DoAuth(w http.ResponseWriter, r *http.Request) {
   w.WriteHeader(http.StatusOK)
   return
 }
+
+func DoAuthVerify(w http.ResponseWriter, r *http.Request) {
+  id, err := AuthenticateByToken(w, r)
+  if err != nil {
+    return
+  }
+
+  fmt.Fprintf(os.Stdout, "Authenticated %d\n", id)
+  w.WriteHeader(http.StatusOK)
+  return
+}
