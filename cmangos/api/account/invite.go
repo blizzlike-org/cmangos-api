@@ -1,6 +1,8 @@
 package account
 
 import (
+  "database/sql"
+
   "github.com/google/uuid"
 
   "metagit.org/blizzlike/cmangos-api/modules/database"
@@ -24,6 +26,30 @@ func AddAccountToInviteToken(token string, id int64) error {
   }
 
   return nil
+}
+
+func GetInviteTokens(id int) ([]InviteInfo, error) {
+  var ii []InviteInfo
+  stmt, err := database.Api.Prepare(
+    "SELECT token FROM invitetoken WHERE account IS NULL AND friend = ?;")
+  if err != nil {
+    return ii, err
+  }
+  defer stmt.Close()
+
+  var rows *sql.Rows
+  rows, err = stmt.Query(id)
+  for rows.Next() {
+    var t InviteInfo
+    err = rows.Scan(&t.Token)
+    if err != nil {
+      return ii, err
+    }
+
+    ii = append(ii, t)
+  }
+
+  return ii, nil
 }
 
 func WriteInviteToken(id int) (string, error) {

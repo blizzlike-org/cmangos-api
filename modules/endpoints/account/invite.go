@@ -36,9 +36,31 @@ func AuthenticateByInviteToken(w http.ResponseWriter, r *http.Request) (string, 
   return auth[1], nil
 }
 
+func DoGetInvites(w http.ResponseWriter, r *http.Request) {
+  id, err := AuthenticateByToken(w, r)
+  if err != nil {
+    fmt.Fprintf(os.Stderr, "Cannot authenticate (%v)\n", err)
+    w.WriteHeader(http.StatusUnauthorized)
+    return
+  }
+
+  tokens, err := api_account.GetInviteTokens(id)
+  if err != nil {
+    fmt.Fprintf(os.Stderr, "Cannot get invite tokens (%v)\n", err)
+    w.WriteHeader(http.StatusInternalServerError)
+    return
+  }
+
+  w.Header().Add("Content-Type", "application/json")
+  w.WriteHeader(http.StatusOK)
+  json.NewEncoder(w).Encode(tokens)
+  return
+}
+
 func DoInvite(w http.ResponseWriter, r *http.Request) {
   id, err := AuthenticateByToken(w, r)
   if err != nil {
+    w.WriteHeader(http.StatusUnauthorized)
     return
   }
 
