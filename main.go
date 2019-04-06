@@ -15,6 +15,7 @@ import (
   e_account "metagit.org/blizzlike/cmangos-api/modules/endpoints/account"
   e_config "metagit.org/blizzlike/cmangos-api/modules/endpoints/config"
   e_realm "metagit.org/blizzlike/cmangos-api/modules/endpoints/realm"
+  e_character "metagit.org/blizzlike/cmangos-api/modules/endpoints/realm/character"
 )
 
 func main() {
@@ -47,6 +48,8 @@ func main() {
   router.HandleFunc("/config", e_config.DoConfig).Methods("GET")
 
   router.HandleFunc("/realm", e_realm.DoRealmlist).Methods("GET")
+  router.HandleFunc("/realm/{realm}/characters/{account}",
+    e_character.DoCharacterlistByAccount).Methods("GET")
 
   log.Fatal(http.ListenAndServe(
     fmt.Sprintf("%s:%d", config.Settings.Api.Listen, config.Settings.Api.Port), router))

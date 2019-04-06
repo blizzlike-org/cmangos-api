@@ -34,6 +34,12 @@ func FetchRealms() ([]Realm, error) {
       return rl, err
     }
 
+    for _, v := range database.Mangosd {
+      if v.Id == realm.Id {
+        realm.CharacterInstance.Db = v.Character
+      }
+    }
+
     cmangos.CheckDaemon(&realm.Host, time.Duration(config.Settings.Api.CheckTimeout))
     rl = append(rl, realm)
   }
