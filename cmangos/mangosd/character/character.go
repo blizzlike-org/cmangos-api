@@ -60,9 +60,9 @@ type CharacterInfo struct {
   EquipmentCache string `json:"equipmentCache"`
   AmmoId int64 `json:"ammoId"`
   ActionBars int `json:"actionBars"`
-  DeleteInfos_Account int64 `json:"deleteInfos_Account"`
-  DeleteInfos_Name string `json:"deleteInfos_Name"`
-  DeleteDate int64 `json:"deleteDate"`
+  DeleteInfos_Account sql.NullInt64 `json:"deleteInfos_Account"`
+  DeleteInfos_Name sql.NullString `json:"deleteInfos_Name"`
+  DeleteDate sql.NullInt64 `json:"deleteDate"`
 }
 
 func (c *CharacterInstanceInfo) GetCharacterByAccountId(id int) ([]CharacterInfo, error) {

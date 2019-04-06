@@ -34,9 +34,9 @@ func FetchRealms() ([]Realm, error) {
       return rl, err
     }
 
-    for _, v := range database.Mangosd {
+    for k, v := range database.Mangosd {
       if v.Id == realm.Id {
-        realm.CharacterInstance.Db = v.Character
+        realm.CharacterInstance.Db = database.Mangosd[k].Character
       }
     }
 

@@ -2,6 +2,8 @@ package character
 
 import (
   "encoding/json"
+  "fmt"
+  "os"
   "net/http"
   "strconv"
   "github.com/gorilla/mux"
@@ -26,6 +28,7 @@ func DoCharacterlistByAccount(w http.ResponseWriter, r *http.Request) {
     if realmid == v.Id && accountid == id {
       characterlist, err = v.CharacterInstance.GetCharacterByAccountId(accountid)
       if err != nil {
+        fmt.Fprintf(os.Stderr, "Cannot fetch characterlist (%v)\n", err)
         w.WriteHeader(http.StatusInternalServerError)
 	return
       }
