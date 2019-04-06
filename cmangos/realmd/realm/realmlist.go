@@ -52,8 +52,10 @@ func GetRealms() []Realm {
 }
 
 func PollRealmStates(interval time.Duration) {
-  t := time.Duration(1 * time.Second)
-  for range time.Tick(t){
+  realmlist, _ = FetchRealms()
+
+  t := time.Duration(time.Duration(interval) * time.Second)
+  for range time.Tick(t) {
     rl, err := FetchRealms()
     if err != nil {
       fmt.Fprintf(os.Stderr, "Cannot fetch realmlist (%v)\n", err)
@@ -62,6 +64,5 @@ func PollRealmStates(interval time.Duration) {
     fmt.Fprintf(os.Stdout, "Fetched realmlist\n")
 
     realmlist = rl
-    t = time.Duration(interval) * time.Second
   }
 }
