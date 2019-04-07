@@ -1,6 +1,8 @@
 package account
 
 import (
+  "fmt"
+  "os"
   "time"
   "database/sql"
 
@@ -13,12 +15,14 @@ func InviteTokenAuth(token string) bool {
   stmt, err := database.Api.Prepare(
     "SELECT friend FROM invitetoken WHERE token = ? AND account IS NULL;")
   if err != nil {
+    fmt.Fprintf(os.Stderr, "Cannot query invite tokens (%v)\n", err)
     return false
   }
   defer stmt.Close()
 
   err = stmt.QueryRow(token).Scan(&friend)
   if err != nil {
+    fmt.Fprintf(os.Stderr, "Invalid/Missing invite token (%v)\n", err)
     return false
   }
 
