@@ -5,11 +5,11 @@ import (
   "net/http"
   "fmt"
   "strings"
-  "os"
 
   api_account "metagit.org/blizzlike/cmangos-api/cmangos/api/account"
   cmangos_account "metagit.org/blizzlike/cmangos-api/cmangos/realmd/account"
   "metagit.org/blizzlike/cmangos-api/modules/config"
+  "metagit.org/blizzlike/cmangos-api/modules/logger"
 )
 
 func AuthenticateByToken(w http.ResponseWriter, r *http.Request) (int, error) {
@@ -18,20 +18,23 @@ func AuthenticateByToken(w http.ResponseWriter, r *http.Request) (int, error) {
   var id int
 
   if len(auth) != 2 {
+    errmsg := "Invalid/Missing Authorization header"
+    logger.Error(errmsg)
     w.WriteHeader(http.StatusBadRequest)
-    return id, fmt.Errorf("Invalid/Missing Authorization header")
+    return id, fmt.Errorf(errmsg)
   }
 
   if !strings.EqualFold(auth[0], "token") {
     errmsg := fmt.Sprintf("AUthentication method not supported (%s)", auth[1])
-    fmt.Fprintf(os.Stderr, "%s\n", errmsg)
+    logger.Error(errmsg)
     w.WriteHeader(http.StatusBadRequest)
     return id, fmt.Errorf(errmsg)
   }
 
   id, err := api_account.AuthenticateByToken(auth[1])
   if err != nil {
-    fmt.Fprintf(os.Stderr, "Cannot authenticate %s (%v)\n", auth[1], err)
+    logger.Error(fmt.Sprintf("Cannot authenticate token %s", auth[1]))
+    logger.Debug(fmt.Sprintf("%v", err))
     w.WriteHeader(http.StatusUnauthorized)
     return id, err
   }
@@ -45,6 +48,8 @@ func DoCreateAccount(w http.ResponseWriter, r *http.Request) {
   if config.Settings.Api.RequireInvite {
     token, err = AuthenticateByInviteToken(w, r)
     if err != nil {
+      logger.Error("Cannot authenticate invite token")
+      logger.Debug(fmt.Sprintf("v", err))
       return
     }
   }
@@ -53,6 +58,8 @@ func DoCreateAccount(w http.ResponseWriter, r *http.Request) {
   _ = json.NewDecoder(r.Body).Decode(&account)
   ae, err := cmangos_account.CreateAccount(&account)
   if err != nil {
+    logger.Error("Cannot create account")
+    logger.Debug(fmt.Sprintf("%v", err))
     w.Header().Add("Content-Type", "application/json")
     w.WriteHeader(http.StatusBadRequest)
     json.NewEncoder(w).Encode(ae)
@@ -80,6 +87,8 @@ func DoGetAccount(w http.ResponseWriter, r *http.Request) {
 
   a, err := cmangos_account.GetAccountInfo(id)
   if err != nil {
+    logger.Error(fmt.Sprintf("Cannot get account info for id %d", id))
+    logger.Debug(fmt.Sprintf("%v", err))
     w.WriteHeader(http.StatusInternalServerError)
     return
   }

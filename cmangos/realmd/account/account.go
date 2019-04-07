@@ -6,6 +6,7 @@ import (
   "database/sql"
 
   "metagit.org/blizzlike/cmangos-api/modules/database"
+  "metagit.org/blizzlike/cmangos-api/modules/logger"
 )
 
 const _CMANGOS_MAX_INPUT = 16
@@ -52,7 +53,7 @@ func CreateAccount(account *AccountInfo) (AccountError, error) {
   if account.Password == "" || len(account.Password) > _CMANGOS_MAX_INPUT {
     a.Password = false
   }
-  if account.Password != account.Repeat {
+  if account.Repeat == "" || account.Password != account.Repeat {
     a.Repeat = false
   }
 
@@ -72,6 +73,8 @@ func CreateAccount(account *AccountInfo) (AccountError, error) {
      (username, sha_pass_hash, email, joindate)
      VALUES (UPPER(?), SHA1(CONCAT(UPPER(?), ':', UPPER(?))), LOWER(?), NOW());`)
   if err != nil {
+    logger.Error(fmt.Sprintf("Cannot prepare query to create new account %s", account.Username))
+    logger.Debug(fmt.Sprintf("%v", err))
     return a, err
   }
   defer stmt.Close()
@@ -80,6 +83,8 @@ func CreateAccount(account *AccountInfo) (AccountError, error) {
   res, err = stmt.Exec(
     account.Username, account.Username, account.Password, account.Email)
   if err != nil {
+    logger.Error(fmt.Sprintf("Cannot create new account %s", account.Username))
+    logger.Debug(fmt.Sprintf("%v", err))
     return a, err
   }
 
@@ -92,12 +97,15 @@ func EmailExists(email string) (bool, error) {
   stmt, err := database.Realmd.Prepare(
     "SELECT id FROM account WHERE email = ?;")
   if err != nil {
+    logger.Error(fmt.Sprintf("Cannot prepare query to get email %s", email))
+    logger.Debug(fmt.Sprintf("%v", err))
     return false, err
   }
   defer stmt.Close()
 
   err = stmt.QueryRow(email).Scan(&id)
   if err != nil {
+    logger.Debug(fmt.Sprintf("%v", err))
     return false, nil
   }
 
@@ -113,6 +121,8 @@ func GetAccountInfo(id int) (AccountInfo, error) {
      FROM account
      WHERE id = ?;`)
   if err != nil {
+    logger.Error(fmt.Sprintf("Cannot prepare query to get acount info %d", id))
+    logger.Debug(fmt.Sprintf("%v", err))
     return ai, err
   }
   defer stmt.Close()
@@ -122,6 +132,7 @@ func GetAccountInfo(id int) (AccountInfo, error) {
     &ai.Last_ip, &ai.Failed_logins, &ai.Locked, &ai.Last_login,
     &ai.Active_realm_id, &ai.Expansion, &ai.Mutetime, &ai.Locale)
   if err != nil {
+    logger.Debug(fmt.Sprintf("%v", err))
     return ai, err
   }
 
@@ -133,6 +144,8 @@ func GetRealmCharacters(id int) ([]RealmCharacters, error) {
   stmt, err := database.Realmd.Prepare(
     "SELECT realmid, acctid, numchars FROM realmcharacters WHERE acctid = ?;")
   if err != nil {
+    logger.Error(fmt.Sprintf("Cannot prepare query to fetch characters of account %d", id))
+    logger.Debug(fmt.Sprintf("%v", err))
     return realmcharacters, err
   }
   defer stmt.Close()
@@ -142,6 +155,8 @@ func GetRealmCharacters(id int) ([]RealmCharacters, error) {
     var rc RealmCharacters
     err = rows.Scan(&rc.Realmid, &rc.Acctid, &rc.Numchars)
     if err != nil {
+      logger.Error(fmt.Sprintf("Cannot query characters of account %d", id))
+      logger.Debug(fmt.Sprintf("%v", err))
       return realmcharacters, err
     }
 
@@ -156,12 +171,15 @@ func UsernameExists(username string) (bool, error) {
   stmt, err := database.Realmd.Prepare(
     "SELECT id FROM account WHERE username = ?;")
   if err != nil {
+    logger.Error(fmt.Sprintf("Cannot preapre query to find account %s", username))
+    logger.Debug(fmt.Sprintf("%v", err))
     return false, err
   }
   defer stmt.Close()
 
   err = stmt.QueryRow(username).Scan(&id)
   if err != nil {
+    logger.Debug(fmt.Sprintf("%v", err))
     return false, nil
   }
 

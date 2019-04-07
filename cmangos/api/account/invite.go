@@ -1,11 +1,13 @@
 package account
 
 import (
+  "fmt"
   "database/sql"
 
   "github.com/google/uuid"
 
   "metagit.org/blizzlike/cmangos-api/modules/database"
+  "metagit.org/blizzlike/cmangos-api/modules/logger"
 )
 
 type InviteInfo struct {
@@ -16,12 +18,16 @@ func AddAccountToInviteToken(token string, id int64) error {
   stmt, err := database.Api.Prepare(
     "UPDATE invitetoken SET account = ? WHERE token = ?;")
   if err != nil {
+    logger.Error(fmt.Sprintf("Cannot prepare query to update invite token owner %s", token))
+    logger.Debug(fmt.Sprintf("%v", err))
     return err
   }
   defer stmt.Close()
 
   _, err = stmt.Exec(id, token)
   if err != nil {
+    logger.Error(fmt.Sprintf("Cannot update invite token owner %s", token))
+    logger.Debug(fmt.Sprintf("%v", err))
     return err
   }
 
@@ -33,6 +39,8 @@ func GetInviteTokens(id int) ([]InviteInfo, error) {
   stmt, err := database.Api.Prepare(
     "SELECT token FROM invitetoken WHERE account IS NULL AND friend = ?;")
   if err != nil {
+    logger.Error(fmt.Sprintf("Cannot prepare query to fetch invite tokens for account %d", id))
+    logger.Debug(fmt.Sprintf("%v", err))
     return ii, err
   }
   defer stmt.Close()
@@ -43,6 +51,8 @@ func GetInviteTokens(id int) ([]InviteInfo, error) {
     var t InviteInfo
     err = rows.Scan(&t.Token)
     if err != nil {
+      logger.Error(fmt.Sprintf("Cannot query invite tokens for account %d", id))
+      logger.Debug(fmt.Sprintf("%v", err))
       return ii, err
     }
 
@@ -58,12 +68,16 @@ func WriteInviteToken(id int) (string, error) {
   stmt, err := database.Api.Prepare(
     "INSERT INTO invitetoken (token, friend) VALUES (?, ?);")
   if err != nil {
+    logger.Error(fmt.Sprintf("Cannot prepare query to insert invite token for account %d", id))
+    logger.Debug(fmt.Sprintf("%v", err))
     return token, err
   }
   defer stmt.Close()
 
   _, err = stmt.Exec(token, id)
   if err != nil {
+    logger.Error(fmt.Sprintf("Cannot insert invite token for account %d", id))
+    logger.Debug(fmt.Sprintf("%v", err))
     return token, err
   }
 

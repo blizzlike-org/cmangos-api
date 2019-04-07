@@ -1,7 +1,10 @@
 package character
 
 import (
+  "fmt"
   "database/sql"
+
+  "metagit.org/blizzlike/cmangos-api/modules/logger"
 )
 
 type CharacterInfo struct {
@@ -76,6 +79,8 @@ func (c *CharacterInstanceInfo) GetCharacterByAccountId(id int) ([]CharacterInfo
      FROM characters
      WHERE account = ?;`)
   if err != nil {
+    logger.Error(fmt.Sprintf("Cannot prepare query to fetch all characters of account %d", id))
+    logger.Debug(fmt.Sprintf("%v", err))
     return ci, err
   }
   defer stmt.Close()
@@ -90,6 +95,8 @@ func (c *CharacterInstanceInfo) GetCharacterByAccountId(id int) ([]CharacterInfo
       &c.Leveltime, &c.Logout_time, &c.Is_logout_resting, &c.Rest_bonus,
       &c.Drunk, &c.Health, &c.DeleteInfos_Account, &c.DeleteInfos_Name, &c.DeleteDate)
     if err != nil {
+      logger.Error(fmt.Sprintf("Cannot query for character of account %d", id))
+      logger.Debug(fmt.Sprintf("%v", err))
       return ci, err
     }
 

@@ -5,12 +5,12 @@ import (
   "net/http"
   "fmt"
   "strings"
-  "os"
 
   "github.com/google/uuid"
 
   api_account "metagit.org/blizzlike/cmangos-api/cmangos/api/account"
   cmangos_account "metagit.org/blizzlike/cmangos-api/cmangos/realmd/account"
+  "metagit.org/blizzlike/cmangos-api/modules/logger"
 )
 
 func Authenticate(w http.ResponseWriter, r *http.Request) (cmangos_account.AccountInfo, error) {
@@ -25,7 +25,7 @@ func Authenticate(w http.ResponseWriter, r *http.Request) (cmangos_account.Accou
 
   if !strings.EqualFold(auth[0], "basic") {
     errmsg := fmt.Sprintf("Authentication method not supported (%s)", auth[0])
-    fmt.Fprintf(os.Stderr, "%s\n", errmsg)
+    logger.Error(errmsg)
     w.WriteHeader(http.StatusBadRequest)
     return a, fmt.Errorf(errmsg)
   }
@@ -34,7 +34,8 @@ func Authenticate(w http.ResponseWriter, r *http.Request) (cmangos_account.Accou
   c := strings.Split(string(credentials), ":")
   a, err = cmangos_account.Authenticate(c[0], c[1])
   if err != nil {
-    fmt.Fprintf(os.Stderr, "Cannot authenticate %s (%v)\n", c[0], err)
+    logger.Error(fmt.Sprintf("Cannot authenticate %s", c[0]))
+    logger.Debug(fmt.Sprintf("%v", err))
     w.WriteHeader(http.StatusUnauthorized)
     return a, err
   }
@@ -45,16 +46,18 @@ func Authenticate(w http.ResponseWriter, r *http.Request) (cmangos_account.Accou
 func DoAuth(w http.ResponseWriter, r *http.Request) {
   a, err := Authenticate(w, r)
   if err != nil {
+    logger.Debug(fmt.Sprintf("%v", err))
     return
   }
 
-  fmt.Fprintf(os.Stdout, "Authenticated %s\n", a.Username)
+  logger.Info(fmt.Sprintf("Authenticated %s", a.Username))
 
   t, err := uuid.NewRandom()
   token := t.String()
   err = api_account.WriteAuthToken(token, a.Id)
   if err != nil {
-    fmt.Fprintf(os.Stderr, "Cannot write auth token (%v)\n", err)
+    logger.Error(fmt.Sprintf("Cannot write auth token %s", token))
+    logger.Debug(fmt.Sprintf("%v", err))
     w.WriteHeader(http.StatusInternalServerError)
     return
   }
@@ -67,10 +70,11 @@ func DoAuth(w http.ResponseWriter, r *http.Request) {
 func DoAuthVerify(w http.ResponseWriter, r *http.Request) {
   id, err := AuthenticateByToken(w, r)
   if err != nil {
+    logger.Error("Cannot verify authentication")
     return
   }
 
-  fmt.Fprintf(os.Stdout, "Authenticated %d\n", id)
+  logger.Info(fmt.Sprintf("AUthenticated %d", id))
   w.WriteHeader(http.StatusOK)
   return
 }

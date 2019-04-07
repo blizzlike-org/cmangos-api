@@ -2,13 +2,13 @@ package realm
 
 import (
   "fmt"
-  "os"
   "time"
   "database/sql"
 
   "metagit.org/blizzlike/cmangos-api/cmangos"
   "metagit.org/blizzlike/cmangos-api/modules/database"
   "metagit.org/blizzlike/cmangos-api/modules/config"
+  "metagit.org/blizzlike/cmangos-api/modules/logger"
 )
 
 var realmlist []Realm
@@ -20,6 +20,8 @@ func FetchRealms() ([]Realm, error) {
      FROM realmlist
      ORDER BY id ASC;`)
   if err != nil {
+    logger.Error("Cannot prepare query to fetch realms")
+    logger.Debug(fmt.Sprintf("%v", err))
     return rl, err
   }
   defer stmt.Close()
@@ -31,6 +33,8 @@ func FetchRealms() ([]Realm, error) {
     err = rows.Scan(&realm.Id, &realm.Name, &realm.Host.Address,
       &realm.Host.Port, &realm.Icon, &realm.Population)
     if err != nil {
+      logger.Error("Cannot query realms")
+      logger.Debug(fmt.Sprintf("%v", err))
       return rl, err
     }
 
@@ -58,10 +62,11 @@ func PollRealmStates(interval time.Duration) {
   for range time.Tick(t) {
     rl, err := FetchRealms()
     if err != nil {
-      fmt.Fprintf(os.Stderr, "Cannot fetch realmlist (%v)\n", err)
+      logger.Error("Cannot fetch realmlist")
+      logger.Debug(fmt.Sprintf("%v", err))
       continue
     }
-    fmt.Fprintf(os.Stdout, "Fetched realmlist\n")
+    logger.Info("Fetched realmlist")
 
     realmlist = rl
   }

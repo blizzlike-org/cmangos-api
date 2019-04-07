@@ -8,6 +8,8 @@ import (
   "net/http"
   "github.com/gorilla/mux"
 
+  "metagit.org/blizzlike/cmangos-api/modules/logger"
+
   cmangos_realm "metagit.org/blizzlike/cmangos-api/cmangos/realmd/realm"
 
   "metagit.org/blizzlike/cmangos-api/modules/config"
@@ -20,25 +22,30 @@ import (
 
 func main() {
   if len(os.Args) != 2 {
-    fmt.Fprintf(os.Stderr, "USAGE: %s <config>\n", os.Args[0])
+    logger.Error(fmt.Sprintf("USAGE: %s <config>", os.Args[0]))
     os.Exit(1)
   }
   _, err := config.Read(os.Args[1])
   if err != nil {
-    fmt.Fprintf(os.Stderr, "Failed to read file %v\n", err)
+    logger.Error(fmt.Sprintf("Failed to read file (%v)", err))
     os.Exit(2)
   }
 
+  logger.Verbosity = config.Settings.Api.Verbosity
+
   err = database.Open()
   if err != nil {
-    fmt.Fprintf(os.Stderr, "%v\n", err)
+    logger.Error(
+      fmt.Sprintf("Cannot initialize database connections (%v)", err))
     os.Exit(3)
   }
   defer database.Close()
 
+  logger.Info("Initialize RealmStates poller")
   go cmangos_realm.PollRealmStates(
     time.Duration(config.Settings.Api.CheckInterval))
 
+  logger.Info("Initialize url multiplexer")
   router := mux.NewRouter()
   router.HandleFunc("/account", e_account.DoGetAccount).Methods("GET")
   router.HandleFunc("/account", e_account.DoCreateAccount).Methods("POST")
@@ -53,6 +60,7 @@ func main() {
   router.HandleFunc("/realm/{realm}/characters/{account}",
     e_character.DoCharacterlistByAccount).Methods("GET")
 
+  logger.Info("Start serving http requests")
   log.Fatal(http.ListenAndServe(
     fmt.Sprintf("%s:%d", config.Settings.Api.Listen, config.Settings.Api.Port), router))
 }

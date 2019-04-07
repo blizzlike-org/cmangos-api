@@ -5,9 +5,9 @@ import (
   "net/http"
   "fmt"
   "strings"
-  "os"
 
   api_account "metagit.org/blizzlike/cmangos-api/cmangos/api/account"
+  "metagit.org/blizzlike/cmangos-api/modules/logger"
 )
 
 func AuthenticateByInviteToken(w http.ResponseWriter, r *http.Request) (string, error) {
@@ -15,22 +15,22 @@ func AuthenticateByInviteToken(w http.ResponseWriter, r *http.Request) (string, 
   auth := strings.Split(header, " ")
 
   if len(auth) != 2 {
+    errmsg := "Invalid/Missing Authorization header"
+    logger.Error(errmsg)
     w.WriteHeader(http.StatusBadRequest)
-    return "", fmt.Errorf("Invalid/Missing Authorization header")
+    return "", fmt.Errorf(errmsg)
   }
 
   if !strings.EqualFold(auth[0], "token") {
     errmsg := "Authentication method not supported"
-    fmt.Fprintf(os.Stderr, "%s\n", errmsg)
+    logger.Error(errmsg)
     w.WriteHeader(http.StatusBadRequest)
     return "", fmt.Errorf(errmsg)
   }
 
   if !api_account.InviteTokenAuth(auth[1]) {
-    errmsg := fmt.Sprintf("Cannot authenticate invite %s", auth[1])
-    fmt.Fprintf(os.Stderr, "%s\n", errmsg)
     w.WriteHeader(http.StatusUnauthorized)
-    return "", fmt.Errorf(errmsg)
+    return "", fmt.Errorf("Cannot authenticate invite %s", auth[1])
   }
 
   return auth[1], nil
@@ -39,14 +39,12 @@ func AuthenticateByInviteToken(w http.ResponseWriter, r *http.Request) (string, 
 func DoGetInvites(w http.ResponseWriter, r *http.Request) {
   id, err := AuthenticateByToken(w, r)
   if err != nil {
-    fmt.Fprintf(os.Stderr, "Cannot authenticate (%v)\n", err)
     w.WriteHeader(http.StatusUnauthorized)
     return
   }
 
   tokens, err := api_account.GetInviteTokens(id)
   if err != nil {
-    fmt.Fprintf(os.Stderr, "Cannot get invite tokens (%v)\n", err)
     w.WriteHeader(http.StatusInternalServerError)
     return
   }
@@ -64,11 +62,9 @@ func DoInvite(w http.ResponseWriter, r *http.Request) {
     return
   }
 
-  fmt.Fprintf(os.Stdout, "Authenticated id %d\n", id)
-
+  logger.Info(fmt.Sprintf("Authenticated id %d", id))
   token, err := api_account.WriteInviteToken(id)
   if err != nil {
-    fmt.Fprintf(os.Stderr, "Cannot write invite token (%v)\n", err)
     w.WriteHeader(http.StatusInternalServerError)
     return
   }

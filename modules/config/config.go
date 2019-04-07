@@ -12,6 +12,7 @@ type ApiConfig struct {
   AuthTokenExpiry int
   CheckTimeout int
   CheckInterval int
+  Verbosity int
 }
 
 type DBConfig struct {
@@ -55,6 +56,7 @@ func Read(file string) (Config, error) {
   Settings.Api.AuthTokenExpiry = c.Section("api").Key("expiry").MustInt(3600)
   Settings.Api.CheckTimeout = c.Section("api").Key("timeout").MustInt(10)
   Settings.Api.CheckInterval = c.Section("api").Key("interval").MustInt(300)
+  Settings.Api.Verbosity = c.Section("api").Key("loglevel").MustInt(1)
 
   // [api.mysql]
   Settings.Api.Db.Address = c.Section("api.mysql").Key("hostname").MustString("127.0.0.1")

@@ -5,6 +5,7 @@ requireInvite = false
 expiry = 3600
 timeout = 10
 interval = 300
+loglevel = 1
 
 [api.mysql]
 hostname = localhost

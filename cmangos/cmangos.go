@@ -3,8 +3,9 @@ package cmangos
 import (
   "fmt"
   "net"
-  "os"
   "time"
+
+  "metagit.org/blizzlike/cmangos-api/modules/logger"
 )
 
 type DaemonInfo struct {
@@ -15,12 +16,14 @@ type DaemonInfo struct {
 }
 
 func CheckDaemon(d *DaemonInfo, timeout time.Duration) error {
+  logger.Info(fmt.Sprintf("Check daemon state %s:%d", d.Address, d.Port))
   d.Lastcheck = int(time.Now().Unix())
   dialer := net.Dialer{Timeout: timeout * time.Second}
   c, err := dialer.Dial("tcp", fmt.Sprintf("%s:%d", d.Address, d.Port))
   if err != nil {
-    fmt.Fprintf(os.Stderr, "Cannot connect to daemon %s:%d (%v)\n",
-      d.Address, d.Port, err)
+    logger.Error(fmt.Sprintf("Cannot connect to daemon %s:%d",
+      d.Address, d.Port))
+    logger.Debug(fmt.Sprintf("%v", err))
     d.State = 0
     return err
   }
