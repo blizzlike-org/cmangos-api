@@ -3,6 +3,7 @@ package character
 import (
   "fmt"
   "database/sql"
+  "time"
 
   "metagit.org/blizzlike/cmangos-api/modules/logger"
 )
@@ -66,6 +67,87 @@ type CharacterInfo struct {
   DeleteInfos_Account sql.NullInt64 `json:"deleteInfos_Account"`
   DeleteInfos_Name sql.NullString `json:"deleteInfos_Name"`
   DeleteDate sql.NullInt64 `json:"deleteDate"`
+}
+
+func (c *CharacterInfo) GetFaction() string {
+  if c.Race == 1 || c.Race == 3 || c.Race == 4 || c.Race == 7 {
+    return "Alliance"
+  }
+  if c.Race == 2 || c.Race == 5 || c.Race == 6 || c.Race == 8 {
+    return "Horde"
+  }
+  return ""
+}
+
+func (c *CharacterInfo) GetRace() string {
+  if c.Race == 1 { return "Human" }
+  if c.Race == 2 { return "Orc" }
+  if c.Race == 3 { return "Dwarf" }
+  if c.Race == 4 { return "Nightelf" }
+  if c.Race == 5 { return "Undead" }
+  if c.Race == 6 { return "Tauren" }
+  if c.Race == 7 { return "Gnome" }
+  if c.Race == 8 { return "Troll" }
+  return ""
+}
+
+func (c *CharacterInfo) GetGender() string {
+  if c.Gender == 0 { return "male"}
+  if c.Gender == 1 { return "female"}
+  return ""
+}
+
+func (c *CharacterInfo) GetClass() string {
+  if c.Class == 1 { return "Warrior" }
+  if c.Class == 2 { return "Paladin" }
+  if c.Class == 3 { return "Hunter" }
+  if c.Class == 4 { return "Rogue" }
+  if c.Class == 5 { return "Priest" }
+  if c.Class == 7 { return "Shaman" }
+  if c.Class == 8 { return "Mage" }
+  if c.Class == 9 { return "Warlock" }
+  if c.Class == 11 { return "Druid" }
+  return ""
+}
+
+func (c *CharacterInfo) GetGold() int64 {
+  return c.Money / 10000
+}
+
+func (c *CharacterInfo) GetSilver() int64 {
+  return (c.Money % 10000) / 100
+}
+
+func (c *CharacterInfo) GetCopper() int64 {
+  return c.Money % 10000 % 100
+}
+
+func (c *CharacterInfo) LoggedOutSince() string {
+  var w, d, h, m, s int
+  msg := "-"
+
+  t := time.Now().Unix() - c.Logout_time
+  if t > 0 {
+    s = int(t % 60)
+    m = int(t / 60 % 60)
+    h = int(t / 3600 % 24)
+    d = int(t / 3600 / 24)
+    w = int(t / 86400 / 7)
+  } else {
+    return msg
+  }
+
+  if w > 0 {
+    msg = time.Unix(c.Logout_time, 0).Format("2006-01-02")
+  } else if d > 0 {
+    msg = fmt.Sprintf("%dd %dh", d, h)
+  } else if h > 0 {
+    msg = fmt.Sprintf("%dh %dm", h, m)
+  } else {
+    msg = fmt.Sprintf("%dm %ds", m, s)
+  }
+
+  return msg
 }
 
 func (c *CharacterInstanceInfo) GetCharacterByAccountId(id int) ([]CharacterInfo, error) {
