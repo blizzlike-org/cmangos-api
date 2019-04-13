@@ -60,6 +60,10 @@ func main() {
   router.HandleFunc("/realm/{realm}/characters/{account}",
     e_character.DoCharacterlistByAccount).Methods("GET")
 
+  router.HandleFunc("/realm/{realm}/character/{character}/guild",
+    e_character.DoCharacterGuild).Methods("GET")
+
+
   logger.Info("Start serving http requests")
   log.Fatal(http.ListenAndServe(
     fmt.Sprintf("%s:%d", config.Settings.Api.Listen, config.Settings.Api.Port), router))

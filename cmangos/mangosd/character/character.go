@@ -67,6 +67,7 @@ type CharacterInfo struct {
   DeleteInfos_Account sql.NullInt64 `json:"deleteInfos_Account"`
   DeleteInfos_Name sql.NullString `json:"deleteInfos_Name"`
   DeleteDate sql.NullInt64 `json:"deleteDate"`
+  GuildMember GuildMemberInfo `json:"guildmember"`
 }
 
 func (c *CharacterInfo) GetFaction() string {
@@ -137,14 +138,43 @@ func (c *CharacterInfo) LoggedOutSince() string {
     return msg
   }
 
-  if w > 0 {
+  if w > 4 {
     msg = time.Unix(c.Logout_time, 0).Format("2006-01-02")
   } else if d > 0 {
     msg = fmt.Sprintf("%dd %dh", d, h)
   } else if h > 0 {
     msg = fmt.Sprintf("%dh %dm", h, m)
-  } else {
+  } else if m > 0 {
     msg = fmt.Sprintf("%dm %ds", m, s)
+  } else {
+    msg = fmt.Sprintf("%ds", s)
+  }
+
+  return msg
+}
+
+func (c *CharacterInfo) PlayedTime() string {
+  var d, h, m, s int
+  msg := "-"
+
+  t := c.Totaltime
+  if t > 0 {
+    s = int(t % 60)
+    m = int(t / 60 % 60)
+    h = int(t / 3600 % 24)
+    d = int(t / 3600 / 24)
+  } else {
+    return msg
+  }
+
+  if d > 0 {
+    msg = fmt.Sprintf("%dd %dh %dm", d, h, m)
+  } else if h > 0 {
+    msg = fmt.Sprintf("%dh %dm %ds", h, m, s)
+  } else if m > 0 {
+    msg = fmt.Sprintf("%dm %ds", m, s)
+  } else {
+    msg = fmt.Sprintf("%ds", s)
   }
 
   return msg
