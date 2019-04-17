@@ -1,5 +1,5 @@
-local auth = require("http.auth")
-local json = require("json")
+local cmangos_auth = require("cmangos.realmd.account.auth")
+local http_auth = require("http.auth")
 local realm = require("cmangos.realmd.realm")
 
 local _M = {}
@@ -18,36 +18,27 @@ local _doc = {
     get = {
       [200] = {
         header = { ["X-Auth-Token"] = "uuid string" }
-      }
+      },
+      [401] = true,
+      [500] = true
     }
   }
 }
 
 function _M.render(w, r)
-  local a, err = auth:authenticate(r)
-  if err ~= nil then
-    w.setStatus(500)
-    return
-  end
+  local account, err = http_auth:authenticate(w, r)
+  if err ~= nil then return end
 
-  local resp, err = json.encode(a)
-  if err ~= nil then
-    w.setStatus(500)
-    return
-  end
-
-  for k, v in pairs(a) do
-    print("k " .. k)
-    if type(v) == "table" then
-      for i, j in pairs(v) do
-        print("i " .. i)
-      end
+  if not account.token then
+    account.token, err = cmangos_auth:create_token(account.id)
+    if err ~= nil then
+      w.set_status(500)
+      return
     end
   end
 
-  w.addHeader("Content-Type", "application/json")
-  w.setStatus(200)
-  w.write(resp)
+  w.add_header("X-Auth-Token", account.token)
+  w.set_status(200)
 end
 
 return _M
