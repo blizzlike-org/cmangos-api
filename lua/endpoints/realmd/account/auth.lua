@@ -19,6 +19,7 @@ local _doc = {
       [200] = {
         header = { ["X-Auth-Token"] = "uuid string" }
       },
+      [400] = true,
       [401] = true,
       [500] = true
     }

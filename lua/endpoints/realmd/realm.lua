@@ -26,16 +26,13 @@ local _doc = {
 }
 
 function _M.get.render(w, r)
-  local realmlist, err = realm:get_realmlist()
-  if err ~= nil then
-    print(err)
-    w.set_status(500)
+  if not realmlist then
+    w.set_status(200)
     return
   end
 
   local resp, err = json.encode(realmlist)
   if err ~= nil then
-    print(err)
     w.set_status(500)
     return
   end

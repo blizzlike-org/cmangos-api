@@ -1,10 +1,13 @@
+local cron = require("cron")
 local http = require("http")
 local mariadb = require("mariadb")
+local realmstatus = require("scheduler.realmstatus")
 local routes = require("routes")
 
 local _M = {}
 
 config = {}
+jobs = {}
 sql = {}
 
 function _M.configure(self, f)
@@ -36,6 +39,8 @@ function _M.main(self)
 
   sql.api = self:open_database(config.db.api)
   sql.realmd = self:open_database(config.db.realmd)
+
+  jobs.realmstatus = cron.run(config.mangosd.check_interval, realmstatus.check)
 
   local listen = config.address .. ":" .. tostring(config.port)
   http.serve(listen, routes, nil)
