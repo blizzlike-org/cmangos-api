@@ -18,7 +18,7 @@ function _M.configure(self, f)
   return dofile(f)
 end
 
-function _M.database(self, cfg)
+function _M.open_database(self, cfg)
   local db, err = mariadb.open(
     cfg.username, cfg.password,
     cfg.address .. ":" .. cfg.port,
@@ -31,11 +31,11 @@ function _M.database(self, cfg)
 end
 
 function _M.main(self)
-  if #arg ~= 3 then self:usage() end
+  if #arg ~= 3 then self:print_usage() end
   config = self:configure(arg[3])
 
-  sql.api = self:database(config.db.api)
-  sql.realmd = self:database(config.db.realmd)
+  sql.api = self:open_database(config.db.api)
+  sql.realmd = self:open_database(config.db.realmd)
 
   local listen = config.address .. ":" .. tostring(config.port)
   http.serve(listen, routes, nil)
@@ -44,7 +44,7 @@ function _M.main(self)
   sql.realmd.close()
 end
 
-function _M.usage(self)
+function _M.print_usage(self)
   print(string.format("USAGE: %s %s <config>", arg[1], arg[2]))
   os.exit(1)
 end

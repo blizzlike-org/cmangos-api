@@ -26,22 +26,22 @@ local _doc = {
 }
 
 function _M.get.render(w, r)
-  local realmlist, err = realm:getRealmlist()
+  local realmlist, err = realm:get_realmlist()
   if err ~= nil then
     print(err)
-    w.setStatus(500)
+    w.set_status(500)
     return
   end
 
   local resp, err = json.encode(realmlist)
   if err ~= nil then
     print(err)
-    w.setStatus(500)
+    w.set_status(500)
     return
   end
 
-  w.addHeader("Content-Type", "application/json")
-  w.setStatus(200)
+  w.add_header("Content-Type", "application/json")
+  w.set_status(200)
   w.write(resp)
 end
 
