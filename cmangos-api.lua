@@ -3,6 +3,7 @@ local http = require("http")
 local mariadb = require("mariadb")
 local realmstatus = require("scheduler.realmstatus")
 local routes = require("routes")
+local logger = require("logger")
 
 local _M = {}
 
@@ -27,7 +28,7 @@ function _M.open_database(self, cfg)
     cfg.address .. ":" .. cfg.port,
     cfg.database)
   if err ~= nil then
-    print(err)
+    logger.error(err)
     os.exit(3)
   end
   return db

@@ -22,8 +22,6 @@ function _M.check_host(self, address, port)
     state = 1
   end
 
-  print(err or "-")
-
   return {
     state = state,
     last_check = os.time()
