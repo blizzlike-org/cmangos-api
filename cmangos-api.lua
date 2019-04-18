@@ -47,6 +47,8 @@ function _M.main(self)
 
   sql.api.close()
   sql.realmd.close()
+
+  jobs.realmstatus.stop()
 end
 
 function _M.print_usage(self)
