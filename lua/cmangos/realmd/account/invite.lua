@@ -12,6 +12,13 @@ function _M.create_token(self, id, gmlevel, info)
   return token
 end
 
+function _M.get_tokens(self, id)
+  local result, err = sql.api.query(
+    "SELECT * FROM invitetoken WHERE friend = ? AND account IS NULL;", id)
+  if err then return nil, err end
+  return result
+end
+
 function _M.update_token(self, token, id)
   local result, err = sql.api.query(
     "UPDATE invitetoken SET account = ? WHERE token = ?;",
@@ -25,7 +32,7 @@ function _M.validate_token(self, token)
   local result, err = sql.api.query(
     "SELECT token, gmlevel FROM invitetoken " ..
     " WHERE token = ? AND account IS NULL;", token)
-  if err ~= nil then return nil, err end
+  if err then return nil, err end
   if #result == 0 then return nil end
 
   return result[1]
