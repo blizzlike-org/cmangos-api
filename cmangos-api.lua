@@ -37,6 +37,7 @@ end
 function _M.main(self)
   if #arg ~= 3 then self:print_usage() end
   config = self:configure(arg[3])
+  logger.set_level(config.loglvl)
 
   sql.api = self:open_database(config.db.api)
   sql.realmd = self:open_database(config.db.realmd)
