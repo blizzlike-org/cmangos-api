@@ -1,4 +1,16 @@
+local uuid = require("uuid")
+
 local _M = {}
+
+function _M.create_token(self, id, gmlevel, info)
+  local token = uuid.create()
+  local result, err = sql.api.query(
+    "INSERT INTO invitetoken (token, friend, gmlevel, info) VALUES (?, ?, ?, ?)",
+    token, id, gmlevel, info or "")
+  if err then return nil, err end
+
+  return token
+end
 
 function _M.update_token(self, token, id)
   local result, err = sql.api.query(
@@ -11,7 +23,7 @@ end
 
 function _M.validate_token(self, token)
   local result, err = sql.api.query(
-    "SELECT token FROM invitetoken " ..
+    "SELECT token, gmlevel FROM invitetoken " ..
     " WHERE token = ? AND account IS NULL;", token)
   if err ~= nil then return nil, err end
   if #result == 0 then return nil end

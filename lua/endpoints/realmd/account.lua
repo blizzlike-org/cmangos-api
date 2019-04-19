@@ -41,10 +41,14 @@ function _M.helper.validate_email(self, email)
 end
 
 function _M.helper.validate_invite(self, token)
+  local invite = nil
   if config.signup.invite.required then
-    if not token or not cmangos_invite:validate_token(token) then return nil end
+    invite = cmangos_invite:validate_token(token)
+    if not token or not invite then return nil end
+    return invite
+  else
+    return true
   end
-  return true
 end
 
 function _M.get.render(w, r)
@@ -99,7 +103,8 @@ function _M.post.render(w, r)
   if not _M.helper:validate_password(req.password) then resp.password = false end
   if not req.validate or req.password ~= req.validate then resp.validate = false end
   if not _M.helper:validate_email(req.email) then resp.email = false end
-  if not _M.helper:validate_invite(req.invite) then resp.invite = false end
+  local invite = _M.helper:validate_invite(req.invite)
+  if not invite then resp.invite = false end
 
   if not resp.username or not resp.password or not resp.validate or not resp.email then
     w.set_status(400)
@@ -113,7 +118,7 @@ function _M.post.render(w, r)
     return
   end
 
-  local _, err = cmangos_account:create(req.username, req.password, req.email, 0)
+  local _, err = cmangos_account:create(req.username, req.password, req.email, (invite or {}).gmlevel or 0)
   if err then
     logger.error(err)
     w.set_status(500)

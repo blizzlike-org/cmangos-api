@@ -31,7 +31,7 @@ function _M.authenticate(self, w, r)
       return nil, "malformed authorization header"
     end
     account, err = auth:authenticate_by_password(username, password)
-    if err ~= nil then
+    if err then
       w.set_status(500)
       return nil, err
     end
@@ -46,7 +46,7 @@ function _M.authenticate(self, w, r)
 
   if method:lower() == "token" then
     account, err = auth:authenticate_by_token(token)
-    if err ~= nil then return nil, err end
+    if err then return nil, err end
     if not account then
       w.set_status(401)
       return nil, "cannot authenticate token"

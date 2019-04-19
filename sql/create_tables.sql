@@ -11,6 +11,8 @@ CREATE TABLE `invitetoken` (
   `token` varchar(36) NOT NULL,
   `friend` int(11) unsigned NOT NULL,
   `account` int(11) unsigned,
+  `gmlevel` int(11) unsigned,
+  `info` text,
   UNIQUE KEY `idx_token` (`token`),
   UNIQUE KEY `idx_user` (`account`)
 ) ENGINE=InnoDB CHARACTER SET utf8;
