@@ -3,9 +3,36 @@ local http_auth = require("http.auth")
 local json = require("json")
 
 local _M = {
+  delete = {},
   get = {},
   post = {}
 }
+
+function _M.delete.render(w, r)
+  local account, err = http_auth:authenticate(w, r)
+  if err then return end
+
+  local vars = r.parse_vars()
+  local invite, err = cmangos_invite:validate_token(vars.token or "")
+  if err then
+    w.set_status(404)
+    return
+  end
+
+  if account.id ~= (invite or {}).friend then
+    w.set_status(403)
+    return
+  end
+
+  local _, err = cmangos_invite:delete_token(vars.token)
+  if err then
+    w.set_status(500)
+    return
+  end
+
+  w.set_status(200)
+  return
+end
 
 function _M.get.render(w, r)
   local account, err = http_auth:authenticate(w, r)

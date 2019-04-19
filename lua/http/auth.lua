@@ -55,6 +55,7 @@ function _M.authenticate(self, w, r)
     return account, nil
   end
 
+  w.set_status(501)
   return nil, "auth method not supported " .. (method:lower() or "-")
 end
 
