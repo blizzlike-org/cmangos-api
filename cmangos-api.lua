@@ -9,7 +9,9 @@ local _M = {}
 
 config = {}
 jobs = {}
-sql = {}
+sql = {
+  mangosd = {}
+}
 
 function _M.configure(self, f)
   fd = io.open(f, "r")
@@ -42,6 +44,13 @@ function _M.main(self)
   sql.api = self:open_database(config.db.api)
   sql.realmd = self:open_database(config.db.realmd)
 
+  for k, v in pairs(config.db.mangosd) do
+    sql.mangosd[k] = {
+      chars = self:open_database(config.db.mangosd[k].chars),
+      world = self:open_database(config.db.mangosd[k].world)
+    }
+  end
+
   jobs.realmstatus = cron.run(config.mangosd.check_interval, realmstatus.check)
 
   local listen = config.address .. ":" .. tostring(config.port)
@@ -49,6 +58,11 @@ function _M.main(self)
 
   sql.api.close()
   sql.realmd.close()
+
+  for k, v in pairs(sql.mangosd) do
+    sql.mangosd[k].chars.close()
+    sql.mangosd[k].world.close()
+  end
 
   jobs.realmstatus.stop()
 end
