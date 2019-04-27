@@ -1,5 +1,38 @@
 local _M = {}
 
+_M._CMANGOS_USERNAME_MAXLEN = 16
+_M._CMANGOS_PASSWORD_MAXLEN = 16
+
+function _M.change_username(self, id, username, password)
+  if #username > _M._CMANGOS_USERNAME_MAXLEN then
+    return nil, "username longer then expected"
+  end
+  if #password > _M._CMANGOS_PASSWORD_MAXLEN then
+    return nil, "password longer then expected"
+  end
+
+  if self:username_exists(username) then
+    return nil, "username already exists"
+  end
+
+  local result, err = sql.realmd.query(
+    "UPDATE account SET " ..
+    " username = ?, " ..
+    " sha_pass_hash = SHA1(CONCAT(UPPER(?), ':', UPPER(?))) " ..
+    "WHERE id = ? AND " ..
+    " sha_pass_hash = SHA1(CONCAT(UPPER(username), ':', UPPER(?)));",
+    username, username, password, id, password)
+  if err then
+    return nil, err
+  end
+
+  if result.affected_rows ~= 1 then
+    return nil, "cannot change username"
+  end
+
+  return true
+end
+
 function _M.create(self, username, password, email, gmlevel)
   local result, err = sql.realmd.query(
     "INSERT INTO account (username, sha_pass_hash, gmlevel, email, joindate) " ..

@@ -137,4 +137,42 @@ function _M.post.render(w, r)
   return
 end
 
+function _M.post.change_account(w, r)
+  local account, err = http_auth:authenticate(w, r)
+  if err then return end
+
+  local vars = r.parse_vars()
+  if account.id ~= tonumber(vars.account) then
+    w.set_status(401)
+    return
+  end
+
+  local header = r.get_header("Content-Type")
+  if not header or header ~= "application/json" then
+    w.set_status(400)
+    return
+  end
+
+  local body, err = r.get_body()
+  if err then
+    w.set_status(400)
+    return
+  end
+  local req = json.decode(body)
+
+  if not req.username and not req.password then
+    w.set_status(400)
+    return
+  end
+
+  local update, err = cmangos_account:change_username(account.id, req.username, req.password)
+  if err then
+    w.set_status(400)
+    return
+  end
+
+  w.set_status(200)
+  return
+end
+
 return _M

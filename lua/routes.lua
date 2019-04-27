@@ -17,5 +17,6 @@ return {
   { method = "GET", context = "/mangosd/{realm}/character/{character}/guild", callback = guild.get.render },
 
   { method = "POST", context = "/realmd/account", callback = account.post.render },
+  { method = "POST", context = "/realmd/account/{account}", callback = account.post.change_account },
   { method = "POST", context = "/realmd/account/invite", callback = invite.post.render }
 }
