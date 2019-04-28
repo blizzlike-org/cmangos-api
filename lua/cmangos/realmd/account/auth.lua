@@ -17,10 +17,12 @@ end
 
 function _M.authenticate_by_token(self, token)
   local result, err = sql.api.query(
-    "SELECT owner FROM authtoken " ..
+    "SELECT owner, expiry FROM authtoken " ..
     " WHERE token = ?;", token)
   if err then return nil, err end
-  if #result == 0 then return nil end
+  if #result == 0 then return nil, "missing auth token" end
+
+  if result[1].expiry < os.time() then return nil, "auth token expired" end
 
   local expiry = os.time() + config.expiry
   local _r, err = sql.api.query(
