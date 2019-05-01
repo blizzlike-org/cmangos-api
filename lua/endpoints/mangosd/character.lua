@@ -19,7 +19,6 @@ function _M.get.render(w, r)
   local characterlist, err = cmangos_character.list(
     { realm = tonumber(vars.realm) }, account.id)
   if err then
-	  print(err)
     w.set_status(500)
     return
   end

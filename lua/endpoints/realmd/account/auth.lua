@@ -28,11 +28,11 @@ local _doc = {
 
 function _M.render(w, r)
   local account, err = http_auth:authenticate(w, r)
-  if err ~= nil then return end
+  if err then return end
 
   if not account.token then
     account.token, err = cmangos_auth:create_token(account.id)
-    if err ~= nil then
+    if err then
       w.set_status(500)
       return
     end
