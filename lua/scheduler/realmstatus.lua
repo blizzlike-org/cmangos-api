@@ -8,7 +8,9 @@ function _M.check()
   if err ~= nil then return end
 
   for k, v in pairs(rl or {}) do
-    rl[k].check = _M:check_host(v.address, v.port)
+    local check = _M:check_host(v.address, v.port)
+    rl[k].check = check.last_check
+    rl[k].state = check.state
   end
   realmlist = rl
   return
